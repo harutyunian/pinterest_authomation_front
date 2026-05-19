@@ -5,6 +5,7 @@ import { ProtectedRoute } from '../components/ProtectedRoute';
 import { PublicRoute } from '../components/PublicRoute';
 import { DashboardPage } from '../pages/DashboardPage';
 import { GeminiKeysPage } from '../pages/GeminiKeysPage';
+import { ImageGeneratorPage } from '../pages/ImageGeneratorPage';
 import { LoginPage } from '../pages/LoginPage';
 
 export function AppRouter() {
@@ -20,6 +21,7 @@ export function AppRouter() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/gemini-keys" element={<GeminiKeysPage />} />
+          <Route path="/image-generator" element={<ImageGeneratorPage />} />
         </Route>
       </Route>
 
