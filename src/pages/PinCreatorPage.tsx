@@ -12,6 +12,7 @@ import {
   Chip,
   CircularProgress,
   FormControl,
+  LinearProgress,
   InputLabel,
   Link,
   MenuItem,
@@ -397,7 +398,10 @@ export function PinCreatorPage() {
               </Alert>
             )}
             {isConnected && boards.length > 0 && (
-              <FormControl fullWidth disabled={boardsLoading}>
+              <FormControl
+                fullWidth
+                disabled={boardsLoading || publishMutation.isPending}
+              >
                 <InputLabel id="pin-creator-board-label">Pinterest board</InputLabel>
                 <Select
                   labelId="pin-creator-board-label"
@@ -533,6 +537,14 @@ export function PinCreatorPage() {
 
       {generatedPin && !pinMutation.isPending && (
         <Card>
+          {publishMutation.isPending && (
+            <>
+              <LinearProgress />
+              <Alert severity="info" sx={{ borderRadius: 0 }}>
+                Removing metadata and preparing image for upload…
+              </Alert>
+            </>
+          )}
           <CardContent>
             <Stack
               direction="row"
@@ -578,7 +590,7 @@ export function PinCreatorPage() {
                   }
                 >
                   {publishMutation.isPending
-                    ? 'Posting to Pinterest…'
+                    ? 'Processing image & publishing…'
                     : 'Post to Pinterest'}
                 </Button>
               </Stack>
