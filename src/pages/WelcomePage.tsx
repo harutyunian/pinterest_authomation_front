@@ -88,7 +88,7 @@ export function WelcomePage() {
       />
 
       <Container maxWidth="lg" sx={{ position: 'relative', py: { xs: 6, md: 10 } }}>
-        <Stack spacing={6} alignItems="center" textAlign="center">
+        <Stack spacing={6} sx={{ alignItems: 'center', textAlign: 'center' }}>
           <Chip
             icon={<AutoAwesomeIcon sx={{ fontSize: 16 }} />}
             label="Social media automation platform"
@@ -131,7 +131,12 @@ export function WelcomePage() {
             </Typography>
           </Box>
 
-          <Stack direction="row" spacing={2} flexWrap="wrap" justifyContent="center" useFlexGap>
+          <Stack
+            direction="row"
+            spacing={2}
+            useFlexGap
+            sx={{ flexWrap: 'wrap', justifyContent: 'center' }}
+          >
             {socialPlatforms.map(({ name, icon: Icon, color }) => (
               <Box
                 key={name}
@@ -229,8 +234,7 @@ export function WelcomePage() {
         <Stack
           direction={{ xs: 'column', md: 'row' }}
           spacing={3}
-          sx={{ mt: 10 }}
-          justifyContent="center"
+          sx={{ mt: 10, justifyContent: 'center' }}
         >
           {features.map((feature) => (
             <Box
