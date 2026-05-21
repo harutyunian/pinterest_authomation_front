@@ -9,6 +9,7 @@ import {
   Card,
   CardActionArea,
   CardContent,
+  Chip,
   CircularProgress,
   FormControl,
   InputLabel,
@@ -19,13 +20,22 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { useState } from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import { getGeminiKeys } from '../api/geminiKeys';
+import {
+  disconnectPinterest,
+  getBoards,
+  getConnection,
+  getOAuthUrl,
+  publishPin,
+} from '../api/pinterest';
 import { generateIdeas, generatePin } from '../api/pinterestContent';
 import type { GeneratedPin } from '../types/pinterestContent';
+
+const BOARD_STORAGE_KEY = 'pin-creator-pinterest-board-id';
 
 function getErrorMessage(error: unknown, fallback: string): string {
   if (axios.isAxiosError(error)) {
@@ -41,12 +51,103 @@ async function copyToClipboard(text: string) {
 }
 
 export function PinCreatorPage() {
+  const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [keyId, setKeyId] = useState('');
+  const [boardId, setBoardId] = useState('');
   const [ideas, setIdeas] = useState<string[]>([]);
   const [selectedTitle, setSelectedTitle] = useState<string | null>(null);
   const [generatedPin, setGeneratedPin] = useState<GeneratedPin | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [publishedLink, setPublishedLink] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const { data: connection, isLoading: connectionLoading } = useQuery({
+    queryKey: ['pinterest-connection'],
+    queryFn: getConnection,
+  });
+
+  const { data: boardsData, isLoading: boardsLoading } = useQuery({
+    queryKey: ['pinterest-boards'],
+    queryFn: getBoards,
+    enabled: connection?.connected === true,
+  });
+
+  const connectMutation = useMutation({
+    mutationFn: getOAuthUrl,
+    onSuccess: (data) => {
+      window.location.href = data.url;
+    },
+    onError: (error) => {
+      setErrorMessage(
+        getErrorMessage(error, 'Failed to start Pinterest connection.'),
+      );
+    },
+  });
+
+  const disconnectMutation = useMutation({
+    mutationFn: disconnectPinterest,
+    onSuccess: () => {
+      setBoardId('');
+      setPublishedLink(null);
+      queryClient.invalidateQueries({ queryKey: ['pinterest-connection'] });
+      queryClient.invalidateQueries({ queryKey: ['pinterest-boards'] });
+    },
+    onError: (error) => {
+      setErrorMessage(
+        getErrorMessage(error, 'Failed to disconnect Pinterest account.'),
+      );
+    },
+  });
+
+  const publishMutation = useMutation({
+    mutationFn: publishPin,
+    onSuccess: (data) => {
+      setPublishedLink(data.link);
+      setSuccessMessage('Pin published to Pinterest.');
+      setErrorMessage('');
+    },
+    onError: (error) => {
+      setErrorMessage(
+        getErrorMessage(error, 'Failed to publish pin to Pinterest.'),
+      );
+    },
+  });
+
+  useEffect(() => {
+    const pinterest = searchParams.get('pinterest');
+    if (pinterest === 'connected') {
+      setSuccessMessage('Pinterest account connected successfully.');
+      queryClient.invalidateQueries({ queryKey: ['pinterest-connection'] });
+      queryClient.invalidateQueries({ queryKey: ['pinterest-boards'] });
+      searchParams.delete('pinterest');
+      searchParams.delete('message');
+      setSearchParams(searchParams, { replace: true });
+    } else if (pinterest === 'error') {
+      const message = searchParams.get('message');
+      setErrorMessage(message ?? 'Pinterest connection failed.');
+      searchParams.delete('pinterest');
+      searchParams.delete('message');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, queryClient]);
+
+  useEffect(() => {
+    const boards = boardsData?.boards ?? [];
+    if (boards.length === 0) return;
+    setBoardId((current) => {
+      if (current && boards.some((b) => b.id === current)) return current;
+      const stored = localStorage.getItem(BOARD_STORAGE_KEY);
+      if (stored && boards.some((b) => b.id === stored)) return stored;
+      return boards[0].id;
+    });
+  }, [boardsData]);
+
+  const handleBoardChange = (id: string) => {
+    setBoardId(id);
+    localStorage.setItem(BOARD_STORAGE_KEY, id);
+  };
 
   const { data: keys = [], isLoading: keysLoading } = useQuery({
     queryKey: ['gemini-keys'],
@@ -118,6 +219,25 @@ export function PinCreatorPage() {
     ? generatedPin.hashtags.map((h) => `#${h}`).join(' ')
     : '';
 
+  const handlePostToPinterest = () => {
+    if (!generatedPin || !boardId) return;
+    setPublishedLink(null);
+    setSuccessMessage('');
+    const descriptionWithHashtags = hashtagsText
+      ? `${generatedPin.description}\n\n${hashtagsText}`
+      : generatedPin.description;
+    publishMutation.mutate({
+      boardId,
+      title: generatedPin.title,
+      description: descriptionWithHashtags,
+      imageBase64: generatedPin.image.imageBase64,
+      mimeType: generatedPin.image.mimeType,
+    });
+  };
+
+  const boards = boardsData?.boards ?? [];
+  const isConnected = connection?.connected === true;
+
   return (
     <Box>
       <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.5 }}>
@@ -132,6 +252,20 @@ export function PinCreatorPage() {
         is saved to the database.
       </Typography>
 
+      {successMessage && (
+        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMessage('')}>
+          {successMessage}
+          {publishedLink && (
+            <>
+              {' '}
+              <Link href={publishedLink} target="_blank" rel="noopener noreferrer">
+                View on Pinterest
+              </Link>
+            </>
+          )}
+        </Alert>
+      )}
+
       {!keysLoading && keys.length === 0 && (
         <Alert severity="warning" sx={{ mb: 3 }}>
           No Gemini API keys found.{' '}
@@ -141,6 +275,70 @@ export function PinCreatorPage() {
           to get started.
         </Alert>
       )}
+
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Stack spacing={2}>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1 }}
+            >
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                Pinterest account
+              </Typography>
+              {connectionLoading ? (
+                <CircularProgress size={20} />
+              ) : (
+                <Chip
+                  size="small"
+                  label={isConnected ? 'Connected' : 'Not connected'}
+                  color={isConnected ? 'success' : 'default'}
+                />
+              )}
+            </Stack>
+            <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+              {!isConnected && (
+                <Button
+                  variant="contained"
+                  sx={{ bgcolor: '#E60023', '&:hover': { bgcolor: '#ad081b' } }}
+                  disabled={connectionLoading || connectMutation.isPending}
+                  onClick={() => connectMutation.mutate()}
+                >
+                  {connectMutation.isPending ? 'Redirecting…' : 'Connect Pinterest'}
+                </Button>
+              )}
+              {isConnected && (
+                <Button
+                  variant="outlined"
+                  color="inherit"
+                  disabled={disconnectMutation.isPending}
+                  onClick={() => disconnectMutation.mutate()}
+                >
+                  {disconnectMutation.isPending ? 'Disconnecting…' : 'Disconnect'}
+                </Button>
+              )}
+            </Stack>
+            {isConnected && (
+              <FormControl fullWidth disabled={boardsLoading}>
+                <InputLabel id="pin-creator-board-label">Pinterest board</InputLabel>
+                <Select
+                  labelId="pin-creator-board-label"
+                  label="Pinterest board"
+                  value={boardId}
+                  onChange={(e) => handleBoardChange(e.target.value)}
+                >
+                  {boards.map((board) => (
+                    <MenuItem key={board.id} value={board.id}>
+                      {board.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+          </Stack>
+        </CardContent>
+      </Card>
 
       <Card sx={{ mb: 3 }}>
         <CardContent>
@@ -264,7 +462,7 @@ export function PinCreatorPage() {
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 Generated pin
               </Typography>
-              <Stack direction="row" spacing={1}>
+              <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
                 <Button size="small" variant="outlined" onClick={handlePickAnother}>
                   Pick another idea
                 </Button>
@@ -277,6 +475,26 @@ export function PinCreatorPage() {
                   startIcon={<DownloadIcon />}
                 >
                   Download image
+                </Button>
+                <Button
+                  variant="contained"
+                  size="small"
+                  sx={{ bgcolor: '#E60023', '&:hover': { bgcolor: '#ad081b' } }}
+                  disabled={
+                    !isConnected ||
+                    !boardId ||
+                    publishMutation.isPending
+                  }
+                  onClick={handlePostToPinterest}
+                  startIcon={
+                    publishMutation.isPending ? (
+                      <CircularProgress size={16} color="inherit" />
+                    ) : undefined
+                  }
+                >
+                  {publishMutation.isPending
+                    ? 'Posting to Pinterest…'
+                    : 'Post to Pinterest'}
                 </Button>
               </Stack>
             </Stack>
@@ -343,6 +561,14 @@ export function PinCreatorPage() {
               Text model: {generatedPin.textModel} · Image model:{' '}
               {generatedPin.image.model}
             </Typography>
+            {publishedLink && (
+              <Alert severity="success" sx={{ mt: 2 }}>
+                Published.{' '}
+                <Link href={publishedLink} target="_blank" rel="noopener noreferrer">
+                  View pin on Pinterest
+                </Link>
+              </Alert>
+            )}
           </CardContent>
         </Card>
       )}
