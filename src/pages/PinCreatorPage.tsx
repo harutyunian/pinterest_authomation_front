@@ -68,10 +68,11 @@ export function PinCreatorPage() {
     queryFn: getConnection,
   });
 
-  const { data: boardsData, isLoading: boardsLoading } = useQuery({
-    queryKey: ['pinterest-boards'],
+  const { data: boardsData, isLoading: boardsLoading, isError: boardsError, error: boardsQueryError } = useQuery({
+    queryKey: ['pinterest-boards', connection?.apiMode],
     queryFn: getBoards,
     enabled: connection?.connected === true,
+    retry: 1,
   });
 
   const connectMutation = useMutation({
@@ -336,7 +337,37 @@ export function PinCreatorPage() {
                 </Button>
               )}
             </Stack>
-            {isConnected && (
+            {boardsError && isConnected && (
+              <Alert severity="error">
+                {getErrorMessage(
+                  boardsQueryError,
+                  'Failed to load Pinterest boards.',
+                )}{' '}
+                Try Disconnect → Connect again. If you changed{' '}
+                <code>PINTEREST_USE_SANDBOX</code> on the server, reconnect after the API
+                restarts.
+              </Alert>
+            )}
+            {isConnected && !boardsLoading && !boardsError && boards.length === 0 && (
+              <Alert severity="warning">
+                {connection?.apiMode === 'sandbox' ? (
+                  <>
+                    No boards returned from the <strong>Pinterest API sandbox</strong>.
+                    Sandbox is separate from your live profile — boards like on
+                    pinterest.com may not appear here. Create a board in the Pinterest
+                    app (while logged in as the same account you connected), then refresh
+                    this page, or wait for <strong>Standard</strong> API access and set{' '}
+                    <code>PINTEREST_USE_SANDBOX=false</code>.
+                  </>
+                ) : (
+                  <>
+                    No boards found on your Pinterest account. Create a board on
+                    Pinterest first, then refresh this page.
+                  </>
+                )}
+              </Alert>
+            )}
+            {isConnected && boards.length > 0 && (
               <FormControl fullWidth disabled={boardsLoading}>
                 <InputLabel id="pin-creator-board-label">Pinterest board</InputLabel>
                 <Select
@@ -352,6 +383,14 @@ export function PinCreatorPage() {
                   ))}
                 </Select>
               </FormControl>
+            )}
+            {isConnected && boardsLoading && (
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                <CircularProgress size={20} />
+                <Typography variant="body2" color="text.secondary">
+                  Loading boards…
+                </Typography>
+              </Stack>
             )}
           </Stack>
         </CardContent>
