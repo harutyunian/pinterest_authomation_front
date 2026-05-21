@@ -2,7 +2,7 @@ name: Deploy Frontend to VPS
 
 on:
   push:
-    branches: [main, master, ci_cd]
+    branches: [main]
 
 jobs:
   deploy:
