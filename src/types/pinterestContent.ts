@@ -5,6 +5,7 @@ export interface GenerateIdeasPayload {
 
 export interface IdeasResponse {
   ideas: string[];
+  textModel: string;
 }
 
 export interface GeneratePinPayload {
@@ -24,5 +25,6 @@ export interface GeneratedPin {
   description: string;
   hashtags: string[];
   imagePrompt: string;
+  textModel: string;
   image: GeneratedPinImage;
 }

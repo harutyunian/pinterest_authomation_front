@@ -340,7 +340,8 @@ export function PinCreatorPage() {
               color="text.secondary"
               sx={{ display: 'block' }}
             >
-              Image model: {generatedPin.image.model}
+              Text model: {generatedPin.textModel} · Image model:{' '}
+              {generatedPin.image.model}
             </Typography>
           </CardContent>
         </Card>
