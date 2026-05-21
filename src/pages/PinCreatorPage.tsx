@@ -306,6 +306,14 @@ export function PinCreatorPage() {
                 container.
               </Alert>
             )}
+            {isConfigured && connection?.apiMode === 'sandbox' && (
+              <Alert severity="info">
+                Pinterest <strong>Trial</strong> mode: pins are created via the API
+                sandbox (test environment). After Standard access is approved, set{' '}
+                <code>PINTEREST_USE_SANDBOX=false</code> on the server, restart the
+                API, then Disconnect and Connect Pinterest again.
+              </Alert>
+            )}
             <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
               {!isConnected && isConfigured && (
                 <Button

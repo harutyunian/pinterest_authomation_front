@@ -1,6 +1,7 @@
 export interface PinterestConnectionStatus {
   connected: boolean;
   configured: boolean;
+  apiMode?: 'sandbox' | 'production';
 }
 
 export interface PinterestOAuthUrl {
