@@ -12,6 +12,7 @@ import {
   Toolbar,
   Typography,
 } from '@mui/material';
+import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { AppNav } from './AppNav';
@@ -19,11 +20,13 @@ import { useAuthStore } from '../stores/authStore';
 
 export function MainLayout() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleLogout = () => {
+    queryClient.removeQueries();
     logout();
     navigate('/login');
   };

@@ -1,6 +1,8 @@
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   Card,
@@ -11,41 +13,58 @@ import {
   Slider,
   Stack,
   Switch,
+  TextField,
   Typography,
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getSchedule, updateSchedule } from '../api/schedule';
+import {
+  SCHEDULE_TIMEZONES,
+  detectBrowserTimezone,
+} from '../constants/timezones';
+import { useAuthStore } from '../stores/authStore';
+import {
+  computeSchedulePreview,
+  formatInterval,
+  timezoneLabel,
+} from '../utils/schedulePreview';
 
-const PRESET_HOURS = [1, 2, 4, 6, 8, 12, 24];
-
-function formatInterval(hours: number): string {
-  if (hours === 1) return 'every hour';
-  return `every ${hours} hours`;
-}
+const PRESET_HOURS = [1, 2, 3, 4, 5] as const;
+const MAX_INTERVAL_HOURS = 5;
 
 export function ScheduleSettingsCard() {
   const queryClient = useQueryClient();
+  const userId = useAuthStore((s) => s.user?.id);
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['schedule'],
+    queryKey: ['schedule', userId],
     queryFn: getSchedule,
+    enabled: Boolean(userId),
   });
 
-  const [intervalHours, setIntervalHours] = useState(8);
+  const [intervalHours, setIntervalHours] = useState(5);
+  const [timezone, setTimezone] = useState(detectBrowserTimezone());
   const [enabled, setEnabled] = useState(true);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (data) {
       setIntervalHours(data.intervalHours);
+      setTimezone(data.timezone);
       setEnabled(data.enabled);
     }
   }, [data]);
 
+  const preview = useMemo(
+    () => computeSchedulePreview(intervalHours),
+    [intervalHours],
+  );
+
   const mutation = useMutation({
     mutationFn: updateSchedule,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['schedule'] });
+      queryClient.invalidateQueries({ queryKey: ['schedule', userId] });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     },
@@ -53,11 +72,24 @@ export function ScheduleSettingsCard() {
 
   const hasChanges =
     data &&
-    (intervalHours !== data.intervalHours || enabled !== data.enabled);
+    (intervalHours !== data.intervalHours ||
+      timezone !== data.timezone ||
+      enabled !== data.enabled);
 
   const handleSave = () => {
-    mutation.mutate({ intervalHours, enabled });
+    mutation.mutate({ intervalHours, timezone, enabled });
   };
+
+  const timezoneOptions = useMemo(() => {
+    const known = new Set<string>(SCHEDULE_TIMEZONES.map((t) => t.value));
+    if (!known.has(timezone)) {
+      return [
+        { value: timezone, label: timezoneLabel(timezone) },
+        ...SCHEDULE_TIMEZONES,
+      ];
+    }
+    return [...SCHEDULE_TIMEZONES];
+  }, [timezone]);
 
   return (
     <Card sx={{ mb: 4 }}>
@@ -65,7 +97,7 @@ export function ScheduleSettingsCard() {
         <Stack direction="row" spacing={1} sx={{ mb: 1, alignItems: 'center' }}>
           <ScheduleIcon color="primary" />
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Post scheduling
+            Pinterest post scheduling
           </Typography>
           {data && (
             <Chip
@@ -77,8 +109,9 @@ export function ScheduleSettingsCard() {
         </Stack>
 
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-          Control how often pins are published automatically. Default is every 8
-          hours.
+          Your schedule is saved per account. Set timezone and interval (up to{' '}
+          {MAX_INTERVAL_HOURS} hours). Times below are local clock hours in your
+          timezone, starting at midnight.
         </Typography>
 
         {isLoading && (
@@ -93,6 +126,30 @@ export function ScheduleSettingsCard() {
 
         {data && !isLoading && (
           <>
+            <Autocomplete
+              options={timezoneOptions}
+              value={
+                timezoneOptions.find((o) => o.value === timezone) ?? {
+                  value: timezone,
+                  label: timezoneLabel(timezone),
+                }
+              }
+              onChange={(_, option) => {
+                if (option) setTimezone(option.value);
+              }}
+              getOptionLabel={(o) => o.label}
+              isOptionEqualToValue={(a, b) => a.value === b.value}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Timezone"
+                  margin="normal"
+                  helperText="Example: Armenia → Asia/Yerevan"
+                />
+              )}
+              sx={{ mb: 2 }}
+            />
+
             <Typography variant="subtitle2" gutterBottom>
               Interval: {formatInterval(intervalHours)}
             </Typography>
@@ -101,15 +158,15 @@ export function ScheduleSettingsCard() {
               value={intervalHours}
               onChange={(_, value) => setIntervalHours(value as number)}
               min={1}
-              max={48}
+              max={MAX_INTERVAL_HOURS}
               step={1}
-              marks={PRESET_HOURS.filter((h) => h <= 48).map((h) => ({
+              marks={PRESET_HOURS.map((h) => ({
                 value: h,
                 label: `${h}h`,
               }))}
               valueLabelDisplay="auto"
               valueLabelFormat={(v) => `${v}h`}
-              sx={{ mt: 2, mb: 3 }}
+              sx={{ mt: 2, mb: 2 }}
             />
 
             <Box sx={{ mb: 3, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -123,6 +180,26 @@ export function ScheduleSettingsCard() {
                 />
               ))}
             </Box>
+
+            <Alert
+              icon={<AccessTimeIcon fontSize="inherit" />}
+              severity="info"
+              sx={{ mb: 3 }}
+            >
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                {preview.postsPerDay} post{preview.postsPerDay === 1 ? '' : 's'} per day
+                {enabled ? '' : ' (when enabled)'}
+              </Typography>
+              <Typography variant="body2" sx={{ mt: 0.5 }}>
+                In <strong>{timezoneLabel(timezone)}</strong>, pins run at:{' '}
+                {preview.postTimesLocal.join(', ')}.
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                Every {intervalHours}h from 00:00 fills a 24h day (
+                {Math.round((24 / intervalHours) * 10) / 10} slots; 24÷{intervalHours}=
+                {preview.postsPerDay}).
+              </Typography>
+            </Alert>
 
             <FormControlLabel
               control={
@@ -138,7 +215,7 @@ export function ScheduleSettingsCard() {
 
             {saved && (
               <Alert severity="success" sx={{ mb: 2 }}>
-                Schedule saved to database.
+                Schedule saved for your account.
               </Alert>
             )}
 
@@ -166,7 +243,11 @@ export function ScheduleSettingsCard() {
                 color="text.secondary"
                 sx={{ mt: 2, display: 'block' }}
               >
-                Last updated: {new Date(data.updatedAt).toLocaleString()}
+                Last updated:{' '}
+                {new Date(data.updatedAt).toLocaleString(undefined, {
+                  timeZone: timezone,
+                })}{' '}
+                ({timezone})
               </Typography>
             )}
           </>
