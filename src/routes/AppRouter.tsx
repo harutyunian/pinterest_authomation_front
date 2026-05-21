@@ -7,10 +7,13 @@ import { DashboardPage } from '../pages/DashboardPage';
 import { GeminiKeysPage } from '../pages/GeminiKeysPage';
 import { ImageGeneratorPage } from '../pages/ImageGeneratorPage';
 import { LoginPage } from '../pages/LoginPage';
+import { WelcomePage } from '../pages/WelcomePage';
 
 export function AppRouter() {
   return (
     <Routes>
+      <Route path="/" element={<WelcomePage />} />
+
       <Route element={<PublicRoute />}>
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
@@ -19,7 +22,7 @@ export function AppRouter() {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
-          <Route path="/" element={<DashboardPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/gemini-keys" element={<GeminiKeysPage />} />
           <Route path="/image-generator" element={<ImageGeneratorPage />} />
         </Route>

@@ -29,7 +29,7 @@ export function LoginPage() {
     mutationFn: login,
     onSuccess: (data) => {
       setAuth(data.accessToken, data.user);
-      navigate('/');
+      navigate('/dashboard');
     },
   });
 

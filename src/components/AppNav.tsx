@@ -5,7 +5,7 @@ import { Tab, Tabs } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const tabs = [
-  { label: 'Dashboard', path: '/', icon: <DashboardIcon sx={{ fontSize: 18 }} /> },
+  { label: 'Dashboard', path: '/dashboard', icon: <DashboardIcon sx={{ fontSize: 18 }} /> },
   { label: 'Gemini Keys', path: '/gemini-keys', icon: <KeyIcon sx={{ fontSize: 18 }} /> },
   {
     label: 'Generate Image',
