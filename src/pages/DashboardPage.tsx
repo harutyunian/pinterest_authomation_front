@@ -3,6 +3,7 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import PinIcon from '@mui/icons-material/PushPin';
 import {
   Box,
+  Button,
   Card,
   CardContent,
   Chip,
@@ -11,6 +12,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
+import { Link as RouterLink } from 'react-router-dom';
 import { getMe } from '../api/auth';
 import { ScheduleSettingsCard } from '../components/ScheduleSettingsCard';
 import { useAuthStore } from '../stores/authStore';
@@ -21,23 +23,28 @@ const featureCards = [
     description: 'Schedule and publish pins automatically to your boards.',
     icon: <PinIcon sx={{ fontSize: 32, color: 'primary.main' }} />,
     status: 'Configured below',
+    link: null as string | null,
   },
   {
     title: 'Content Generator',
-    description: 'AI-assisted titles, descriptions, and hashtags for pins.',
+    description: 'AI home decor title ideas, descriptions, hashtags, and images.',
     icon: <AutoAwesomeIcon sx={{ fontSize: 32, color: 'primary.main' }} />,
-    status: 'Add keys in Gemini Keys tab',
+    status: 'Open Pin Creator',
+    link: '/pin-creator',
+    adminOnly: true,
   },
   {
     title: 'Campaign Calendar',
     description: 'Plan campaigns and track posting cadence across boards.',
     icon: <CalendarMonthIcon sx={{ fontSize: 32, color: 'primary.main' }} />,
     status: 'Coming soon',
+    link: null,
   },
 ];
 
 export function DashboardPage() {
   const storedUser = useAuthStore((s) => s.user);
+  const isAdmin = storedUser?.role === 'admin';
 
   const { data: user, isLoading } = useQuery({
     queryKey: ['me'],
@@ -70,7 +77,9 @@ export function DashboardPage() {
       <ScheduleSettingsCard />
 
       <Grid container spacing={3}>
-        {featureCards.map((card) => (
+        {featureCards
+          .filter((card) => !('adminOnly' in card && card.adminOnly) || isAdmin)
+          .map((card) => (
           <Grid key={card.title} size={{ xs: 12, md: 4 }}>
             <Card
               sx={{
@@ -90,7 +99,18 @@ export function DashboardPage() {
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   {card.description}
                 </Typography>
-                <Chip label={card.status} size="small" variant="outlined" />
+                {card.link ? (
+                  <Button
+                    component={RouterLink}
+                    to={card.link}
+                    size="small"
+                    variant="outlined"
+                  >
+                    {card.status}
+                  </Button>
+                ) : (
+                  <Chip label={card.status} size="small" variant="outlined" />
+                )}
               </CardContent>
             </Card>
           </Grid>

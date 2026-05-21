@@ -6,6 +6,7 @@ import { PublicRoute } from '../components/PublicRoute';
 import { DashboardPage } from '../pages/DashboardPage';
 import { GeminiKeysPage } from '../pages/GeminiKeysPage';
 import { ImageGeneratorPage } from '../pages/ImageGeneratorPage';
+import { PinCreatorPage } from '../pages/PinCreatorPage';
 import { LoginPage } from '../pages/LoginPage';
 import { WelcomePage } from '../pages/WelcomePage';
 
@@ -24,6 +25,7 @@ export function AppRouter() {
         <Route element={<MainLayout />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/gemini-keys" element={<GeminiKeysPage />} />
+          <Route path="/pin-creator" element={<PinCreatorPage />} />
           <Route path="/image-generator" element={<ImageGeneratorPage />} />
         </Route>
       </Route>
