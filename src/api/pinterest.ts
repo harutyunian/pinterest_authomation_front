@@ -1,5 +1,6 @@
 import apiClient from './client';
 import type {
+  PinterestBoard,
   PinterestBoardsResponse,
   PinterestConnectionStatus,
   PinterestOAuthUrl,
@@ -25,6 +26,15 @@ export async function getBoards(): Promise<PinterestBoardsResponse> {
   const { data } = await apiClient.get<PinterestBoardsResponse>(
     '/pinterest/boards',
   );
+  return data;
+}
+
+export async function createPinterestBoard(
+  name = 'Home Decor Pins',
+): Promise<PinterestBoard> {
+  const { data } = await apiClient.post<PinterestBoard>('/pinterest/boards', {
+    name,
+  });
   return data;
 }
 
