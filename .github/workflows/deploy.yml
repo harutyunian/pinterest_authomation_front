@@ -1,0 +1,25 @@
+name: Deploy Frontend to VPS
+
+on:
+  push:
+    branches: [main, master, ci_cd]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy Web via SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/pinterest/frontend
+            git fetch origin
+            git checkout ${{ github.ref_name }}
+            git pull origin ${{ github.ref_name }}
+            cd /opt/pinterest
+            docker compose build web
+            docker compose up -d web
