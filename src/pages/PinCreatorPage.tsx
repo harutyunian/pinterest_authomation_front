@@ -253,8 +253,13 @@ export function PinCreatorPage() {
   };
 
   const boards = boardsData?.boards ?? [];
+  const selectedBoard = boards.find((b) => b.id === boardId);
+  const isSecretBoard =
+    selectedBoard?.privacy === 'SECRET' ||
+    selectedBoard?.privacy === 'PROTECTED';
   const isConfigured = connection?.configured !== false;
   const isConnected = connection?.connected === true;
+  const isProduction = connection?.apiMode === 'production';
 
   return (
     <Box>
@@ -329,6 +334,12 @@ export function PinCreatorPage() {
                 sandbox (test environment). After Standard access is approved, set{' '}
                 <code>PINTEREST_USE_SANDBOX=false</code> on the server, restart the
                 API, then Disconnect and Connect Pinterest again.
+              </Alert>
+            )}
+            {isConfigured && isConnected && isProduction && (
+              <Alert severity="success">
+                Production mode: pins publish to your real Pinterest account via{' '}
+                <code>api.pinterest.com</code>.
               </Alert>
             )}
             <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
@@ -412,10 +423,21 @@ export function PinCreatorPage() {
                   {boards.map((board) => (
                     <MenuItem key={board.id} value={board.id}>
                       {board.name}
+                      {board.privacy && board.privacy !== 'PUBLIC'
+                        ? ` (${board.privacy === 'SECRET' ? 'Secret' : 'Protected'})`
+                        : ''}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
+            )}
+            {isConnected && isSecretBoard && (
+              <Alert severity="warning">
+                The selected board is <strong>{selectedBoard?.privacy?.toLowerCase()}</strong>.
+                Pins on secret/protected boards are only visible to you (or invited
+                collaborators), not to everyone on Pinterest. Choose a <strong>public</strong>{' '}
+                board for normal visibility.
+              </Alert>
             )}
             {isConnected && boardsLoading && (
               <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>

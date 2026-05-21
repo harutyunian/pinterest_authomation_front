@@ -8,9 +8,12 @@ export interface PinterestOAuthUrl {
   url: string;
 }
 
+export type BoardPrivacy = 'PUBLIC' | 'PROTECTED' | 'SECRET';
+
 export interface PinterestBoard {
   id: string;
   name: string;
+  privacy?: BoardPrivacy;
 }
 
 export interface PinterestBoardsResponse {
