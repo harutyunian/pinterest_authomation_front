@@ -1,5 +1,6 @@
 export interface PinterestConnectionStatus {
   connected: boolean;
+  configured: boolean;
 }
 
 export interface PinterestOAuthUrl {
