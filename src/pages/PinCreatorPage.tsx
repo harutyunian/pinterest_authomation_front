@@ -26,6 +26,7 @@ import { useEffect, useState } from 'react';
 import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import { getGeminiKeys } from '../api/geminiKeys';
 import {
+  createPinterestBoard,
   disconnectPinterest,
   getBoards,
   getConnection,
@@ -98,6 +99,20 @@ export function PinCreatorPage() {
     onError: (error) => {
       setErrorMessage(
         getErrorMessage(error, 'Failed to disconnect Pinterest account.'),
+      );
+    },
+  });
+
+  const createBoardMutation = useMutation({
+    mutationFn: () => createPinterestBoard('Home Decor Pins'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pinterest-boards'] });
+      setSuccessMessage('Sandbox board created. Select it below to publish pins.');
+      setErrorMessage('');
+    },
+    onError: (error) => {
+      setErrorMessage(
+        getErrorMessage(error, 'Failed to create Pinterest board.'),
       );
     },
   });
@@ -351,14 +366,28 @@ export function PinCreatorPage() {
             {isConnected && !boardsLoading && !boardsError && boards.length === 0 && (
               <Alert severity="warning">
                 {connection?.apiMode === 'sandbox' ? (
-                  <>
-                    No boards returned from the <strong>Pinterest API sandbox</strong>.
-                    Sandbox is separate from your live profile — boards like on
-                    pinterest.com may not appear here. Create a board in the Pinterest
-                    app (while logged in as the same account you connected), then refresh
-                    this page, or wait for <strong>Standard</strong> API access and set{' '}
-                    <code>PINTEREST_USE_SANDBOX=false</code>.
-                  </>
+                  <Stack spacing={1.5}>
+                    <Typography variant="body2">
+                      Sandbox accounts start with <strong>no boards</strong> — your live
+                      boards on pinterest.com (e.g. Europe) are not copied here. Create a
+                      test board via the API, then publish pins to it.
+                    </Typography>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      disabled={createBoardMutation.isPending}
+                      onClick={() => createBoardMutation.mutate()}
+                      startIcon={
+                        createBoardMutation.isPending ? (
+                          <CircularProgress size={16} />
+                        ) : undefined
+                      }
+                    >
+                      {createBoardMutation.isPending
+                        ? 'Creating board…'
+                        : 'Create sandbox board'}
+                    </Button>
+                  </Stack>
                 ) : (
                   <>
                     No boards found on your Pinterest account. Create a board on
