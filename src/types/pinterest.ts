@@ -2,6 +2,7 @@ export interface PinterestConnectionStatus {
   connected: boolean;
   configured: boolean;
   apiMode?: 'sandbox' | 'production';
+  apiBase?: string;
 }
 
 export interface PinterestOAuthUrl {
@@ -32,4 +33,8 @@ export interface PublishPinPayload {
 export interface PublishPinResponse {
   pinId: string;
   link: string;
+  apiMode?: 'sandbox' | 'production';
+  apiBase?: string;
+  boardName?: string;
+  boardPrivacy?: BoardPrivacy;
 }

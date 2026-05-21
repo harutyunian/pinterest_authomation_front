@@ -122,7 +122,13 @@ export function PinCreatorPage() {
     mutationFn: publishPin,
     onSuccess: (data) => {
       setPublishedLink(data.link);
-      setSuccessMessage('Pin published to Pinterest.');
+      const mode =
+        data.apiMode === 'production'
+          ? 'production (real Pinterest)'
+          : (data.apiMode ?? 'unknown');
+      setSuccessMessage(
+        `Pin published via ${mode} to public board "${data.boardName ?? 'board'}".`,
+      );
       setErrorMessage('');
     },
     onError: (error) => {
@@ -338,8 +344,16 @@ export function PinCreatorPage() {
             )}
             {isConfigured && isConnected && isProduction && (
               <Alert severity="success">
-                Production mode: pins publish to your real Pinterest account via{' '}
-                <code>api.pinterest.com</code>.
+                Production mode: API is <code>{connection?.apiBase ?? 'api.pinterest.com/v5'}</code>.
+                Only <strong>public</strong> boards are listed for publishing.
+              </Alert>
+            )}
+            {isConfigured && isConnected && !isProduction && (
+              <Alert severity="warning">
+                Sandbox mode is still active ({connection?.apiBase ?? 'sandbox API'}). Pins
+                are test pins and often only visible to you. Set{' '}
+                <code>PINTEREST_USE_SANDBOX=false</code> on the server, restart API, then
+                Disconnect → Connect.
               </Alert>
             )}
             <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
@@ -402,8 +416,8 @@ export function PinCreatorPage() {
                   </Stack>
                 ) : (
                   <>
-                    No boards found on your Pinterest account. Create a board on
-                    Pinterest first, then refresh this page.
+                    No <strong>public</strong> boards found. On pinterest.com create a
+                    board and set it to Public (not Secret), then refresh this page.
                   </>
                 )}
               </Alert>
@@ -680,6 +694,14 @@ export function PinCreatorPage() {
               Text model: {generatedPin.textModel} · Image model:{' '}
               {generatedPin.image.model}
             </Typography>
+            {isProduction && (
+              <Alert severity="info" sx={{ mt: 2 }}>
+                Gemini-generated images are often labeled &ldquo;Modified with AI&rdquo;
+                on Pinterest and may stay <strong>visible only to you</strong> even on a
+                public board. That is Pinterest policy, not sandbox. Test with your own
+                photo upload later if needed.
+              </Alert>
+            )}
             {publishedLink && (
               <Alert severity="success" sx={{ mt: 2 }}>
                 Published.{' '}
