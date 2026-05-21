@@ -1,4 +1,5 @@
-import { Box, Chip, CircularProgress, Container, Stack, Typography } from '@mui/material';
+import { Box, Chip, CircularProgress, Container, Link, Stack, Typography } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 import { LANDING_FONT } from './welcomeStyles';
 
 type WelcomeFooterProps = {
@@ -23,12 +24,27 @@ export function WelcomeFooter({ isLoading, isError, status }: WelcomeFooterProps
           spacing={2}
           sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between' }}
         >
-          <Typography
-            variant="body2"
-            sx={{ color: 'rgba(255,255,255,0.45)', fontFamily: LANDING_FONT }}
-          >
-            © {new Date().getFullYear()} Social Automation
-          </Typography>
+          <Stack spacing={0.5}>
+            <Typography
+              variant="body2"
+              sx={{ color: 'rgba(255,255,255,0.45)', fontFamily: LANDING_FONT }}
+            >
+              © {new Date().getFullYear()} Social Automation
+            </Typography>
+            <Link
+              component={RouterLink}
+              to="/privacy"
+              variant="caption"
+              sx={{
+                color: 'rgba(255,255,255,0.5)',
+                fontFamily: LANDING_FONT,
+                textDecoration: 'none',
+                '&:hover': { color: 'rgba(255,255,255,0.85)' },
+              }}
+            >
+              Политика конфиденциальности
+            </Link>
+          </Stack>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography
               variant="caption"

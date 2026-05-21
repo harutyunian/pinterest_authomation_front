@@ -7,6 +7,7 @@ import {
   Chip,
   Container,
   IconButton,
+  Link,
   Menu,
   MenuItem,
   Toolbar,
@@ -14,7 +15,7 @@ import {
 } from '@mui/material';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, Outlet, useNavigate } from 'react-router-dom';
 import { AppNav } from './AppNav';
 import { useAuthStore } from '../stores/authStore';
 
@@ -79,6 +80,15 @@ export function MainLayout() {
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <AppNav />
         <Outlet />
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ mt: 6, display: 'block', textAlign: 'center' }}
+        >
+          <Link component={RouterLink} to="/privacy" underline="hover">
+            Политика конфиденциальности
+          </Link>
+        </Typography>
       </Container>
     </Box>
   );

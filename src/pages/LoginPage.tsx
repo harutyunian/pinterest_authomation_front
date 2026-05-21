@@ -9,12 +9,13 @@ import {
   CircularProgress,
   IconButton,
   InputAdornment,
+  Link,
   TextField,
   Typography,
 } from '@mui/material';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { login } from '../api/auth';
 import { useAuthStore } from '../stores/authStore';
 
@@ -104,6 +105,12 @@ export function LoginPage() {
             )}
           </Button>
         </Box>
+
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 3, display: 'block', textAlign: 'center' }}>
+          <Link component={RouterLink} to="/privacy" underline="hover">
+            Политика конфиденциальности
+          </Link>
+        </Typography>
       </CardContent>
     </Card>
   );
