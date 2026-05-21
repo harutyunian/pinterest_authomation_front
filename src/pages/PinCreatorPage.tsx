@@ -236,6 +236,7 @@ export function PinCreatorPage() {
   };
 
   const boards = boardsData?.boards ?? [];
+  const isConfigured = connection?.configured !== false;
   const isConnected = connection?.connected === true;
 
   return (
@@ -297,8 +298,16 @@ export function PinCreatorPage() {
                 />
               )}
             </Stack>
+            {!isConfigured && !connectionLoading && (
+              <Alert severity="warning">
+                Pinterest API credentials are not set on the server. Add{' '}
+                <code>PINTEREST_APP_ID</code> and <code>PINTEREST_APP_SECRET</code>{' '}
+                to the VPS <code>/opt/pinterest/.env</code>, then restart the API
+                container.
+              </Alert>
+            )}
             <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
-              {!isConnected && (
+              {!isConnected && isConfigured && (
                 <Button
                   variant="contained"
                   sx={{ bgcolor: '#E60023', '&:hover': { bgcolor: '#ad081b' } }}
