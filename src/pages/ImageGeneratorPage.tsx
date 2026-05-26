@@ -12,7 +12,6 @@ import {
   InputLabel,
   Link,
   MenuItem,
-  Select,
   Stack,
   TextField,
   Typography,
@@ -21,6 +20,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
+import { AppSelect } from '../components/AppSelect';
 import { generateImage, getImageModels } from '../api/imageGeneration';
 import { getGeminiKeys } from '../api/geminiKeys';
 import type { GeneratedImage } from '../types/imageGeneration';
@@ -130,7 +130,7 @@ export function ImageGeneratorPage() {
           <Stack spacing={3}>
             <FormControl fullWidth disabled={keysLoading || keys.length === 0}>
               <InputLabel id="image-gen-key-label">API key</InputLabel>
-              <Select
+              <AppSelect
                 labelId="image-gen-key-label"
                 label="API key"
                 value={keyId}
@@ -141,7 +141,7 @@ export function ImageGeneratorPage() {
                     {key.name}
                   </MenuItem>
                 ))}
-              </Select>
+              </AppSelect>
             </FormControl>
 
             <FormControl
@@ -149,7 +149,7 @@ export function ImageGeneratorPage() {
               disabled={!keyId || modelsLoading || models.length === 0}
             >
               <InputLabel id="image-gen-model-label">Model</InputLabel>
-              <Select
+              <AppSelect
                 labelId="image-gen-model-label"
                 label="Model"
                 value={model}
@@ -169,7 +169,7 @@ export function ImageGeneratorPage() {
                       {m.displayName}
                     </MenuItem>
                   ))}
-              </Select>
+              </AppSelect>
             </FormControl>
 
             {modelsError && keyId && (
@@ -193,6 +193,7 @@ export function ImageGeneratorPage() {
 
             <Box>
               <Button
+                type="button"
                 variant="contained"
                 startIcon={
                   generateMutation.isPending ? (

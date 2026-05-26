@@ -1,6 +1,8 @@
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ImageIcon from '@mui/icons-material/Image';
 import KeyIcon from '@mui/icons-material/Key';
+import MovieIcon from '@mui/icons-material/Movie';
+import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
 import PinIcon from '@mui/icons-material/PushPin';
 import { Tab, Tabs } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -19,6 +21,18 @@ const allTabs = [
     label: 'Generate Image',
     path: '/image-generator',
     icon: <ImageIcon sx={{ fontSize: 18 }} />,
+    adminOnly: true,
+  },
+  {
+    label: 'AI Video Generation',
+    path: '/video-generator',
+    icon: <MovieIcon sx={{ fontSize: 18 }} />,
+    adminOnly: true,
+  },
+  {
+    label: 'Stored Videos',
+    path: '/stored-videos',
+    icon: <VideoLibraryIcon sx={{ fontSize: 18 }} />,
     adminOnly: true,
   },
 ] as const;

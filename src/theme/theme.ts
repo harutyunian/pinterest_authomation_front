@@ -24,6 +24,9 @@ export const theme = createTheme({
   shape: { borderRadius: 12 },
   components: {
     MuiButton: {
+      defaultProps: {
+        type: 'button',
+      },
       styleOverrides: {
         root: {
           textTransform: 'none',
@@ -32,6 +35,21 @@ export const theme = createTheme({
           paddingLeft: 24,
           paddingRight: 24,
         },
+      },
+    },
+    MuiButtonBase: {
+      defaultProps: {
+        type: 'button',
+      },
+    },
+    MuiIconButton: {
+      defaultProps: {
+        type: 'button',
+      },
+    },
+    MuiToggleButton: {
+      defaultProps: {
+        type: 'button',
       },
     },
     MuiCard: {

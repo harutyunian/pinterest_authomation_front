@@ -127,6 +127,7 @@ export function ScheduleSettingsCard() {
         {data && !isLoading && (
           <>
             <Autocomplete
+              onMouseDown={(event) => event.preventDefault()}
               options={timezoneOptions}
               value={
                 timezoneOptions.find((o) => o.value === timezone) ?? {
@@ -226,6 +227,7 @@ export function ScheduleSettingsCard() {
             )}
 
             <Button
+              type="button"
               variant="contained"
               onClick={handleSave}
               disabled={!hasChanges || mutation.isPending}

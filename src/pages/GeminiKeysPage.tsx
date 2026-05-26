@@ -307,8 +307,15 @@ export function GeminiKeysPage() {
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={closeDialog}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmit} disabled={isSaving}>
+          <Button type="button" onClick={closeDialog}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="contained"
+            onClick={() => void handleSubmit()}
+            disabled={isSaving}
+          >
             {isSaving ? (
               <CircularProgress size={22} color="inherit" />
             ) : (
