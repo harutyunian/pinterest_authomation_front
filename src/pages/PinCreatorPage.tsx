@@ -16,7 +16,6 @@ import {
   InputLabel,
   Link,
   MenuItem,
-  Select,
   Skeleton,
   Stack,
   Typography,
@@ -25,6 +24,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { Link as RouterLink, useSearchParams } from 'react-router-dom';
+import { AppSelect } from '../components/AppSelect';
 import { getGeminiKeys } from '../api/geminiKeys';
 import {
   createPinterestBoard,
@@ -428,7 +428,7 @@ export function PinCreatorPage() {
                 disabled={boardsLoading || publishMutation.isPending}
               >
                 <InputLabel id="pin-creator-board-label">Pinterest board</InputLabel>
-                <Select
+                <AppSelect
                   labelId="pin-creator-board-label"
                   label="Pinterest board"
                   value={boardId}
@@ -442,7 +442,7 @@ export function PinCreatorPage() {
                         : ''}
                     </MenuItem>
                   ))}
-                </Select>
+                </AppSelect>
               </FormControl>
             )}
             {isConnected && isSecretBoard && (
@@ -467,43 +467,44 @@ export function PinCreatorPage() {
 
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Stack spacing={2}>
-            <FormControl fullWidth disabled={keysLoading || keys.length === 0}>
-              <InputLabel id="pin-creator-key-label">API key</InputLabel>
-              <Select
-                labelId="pin-creator-key-label"
-                label="API key"
-                value={keyId}
-                onChange={(e) => {
-                  setKeyId(e.target.value);
-                  setIdeas([]);
-                  setSelectedTitle(null);
-                  setGeneratedPin(null);
-                }}
-              >
-                {keys.map((key) => (
-                  <MenuItem key={key.id} value={key.id}>
-                    {key.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <Stack spacing={2}>
+              <FormControl fullWidth disabled={keysLoading || keys.length === 0}>
+                <InputLabel id="pin-creator-key-label">API key</InputLabel>
+                <AppSelect
+                  labelId="pin-creator-key-label"
+                  label="API key"
+                  value={keyId}
+                  onChange={(e) => {
+                    setKeyId(e.target.value);
+                    setIdeas([]);
+                    setSelectedTitle(null);
+                    setGeneratedPin(null);
+                  }}
+                >
+                  {keys.map((key) => (
+                    <MenuItem key={key.id} value={key.id}>
+                      {key.name}
+                    </MenuItem>
+                  ))}
+                </AppSelect>
+              </FormControl>
 
-            <Button
-              variant="contained"
-              startIcon={
-                ideasMutation.isPending ? (
-                  <CircularProgress size={20} color="inherit" />
-                ) : (
-                  <AutoAwesomeIcon />
-                )
-              }
-              onClick={handleGenerateIdeas}
-              disabled={!keyId || ideasMutation.isPending || pinMutation.isPending}
-            >
-              {ideasMutation.isPending ? 'Generating ideas…' : 'Generate title ideas'}
-            </Button>
-          </Stack>
+              <Button
+                type="button"
+                variant="contained"
+                startIcon={
+                  ideasMutation.isPending ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : (
+                    <AutoAwesomeIcon />
+                  )
+                }
+                onClick={handleGenerateIdeas}
+                disabled={!keyId || ideasMutation.isPending || pinMutation.isPending}
+              >
+                {ideasMutation.isPending ? 'Generating ideas…' : 'Generate title ideas'}
+              </Button>
+            </Stack>
         </CardContent>
       </Card>
 

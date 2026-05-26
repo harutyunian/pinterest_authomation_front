@@ -7,6 +7,8 @@ import { PublicRoute } from '../components/PublicRoute';
 import { DashboardPage } from '../pages/DashboardPage';
 import { GeminiKeysPage } from '../pages/GeminiKeysPage';
 import { ImageGeneratorPage } from '../pages/ImageGeneratorPage';
+import { StoredVideosPage } from '../pages/StoredVideosPage';
+import { VideoGeneratorPage } from '../pages/VideoGeneratorPage';
 import { PinCreatorPage } from '../pages/PinCreatorPage';
 import { LoginPage } from '../pages/LoginPage';
 import { PrivacyPolicyPage } from '../pages/PrivacyPolicyPage';
@@ -33,6 +35,8 @@ export function AppRouter() {
           <Route path="/gemini-keys" element={<GeminiKeysPage />} />
           <Route path="/pin-creator" element={<PinCreatorPage />} />
           <Route path="/image-generator" element={<ImageGeneratorPage />} />
+          <Route path="/video-generator" element={<VideoGeneratorPage />} />
+          <Route path="/stored-videos" element={<StoredVideosPage />} />
         </Route>
       </Route>
 
