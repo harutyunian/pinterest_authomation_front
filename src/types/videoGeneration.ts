@@ -33,6 +33,7 @@ export interface GenerateScenePayload extends GenerateVideoPayload {
   sceneIndex: number;
   characters: VideoCharacter[];
   prompt: string;
+  continuityMode?: boolean;
 }
 
 export interface GeneratedVideo {

@@ -15,6 +15,7 @@ export interface VideoGeneratorDraft {
   prompt: string;
   characters: VideoCharacter[];
   scenes: string[];
+  continuityMode?: boolean;
 }
 
 function restoreCharacterPreview(character: VideoCharacter): VideoCharacter {
@@ -79,6 +80,7 @@ export function loadVideoGeneratorDraft(): VideoGeneratorDraft | null {
       scenes: Array.isArray(parsed.scenes)
         ? parsed.scenes.filter((s): s is string => typeof s === 'string')
         : [],
+      continuityMode: parsed.continuityMode === true,
     };
   } catch {
     return null;
@@ -90,14 +92,13 @@ export function saveVideoGeneratorDraft(draft: VideoGeneratorDraft): void {
     const payload: VideoGeneratorDraft = {
       ...draft,
       characters: draft.characters.map(
-        ({
-          imagePreviewUrl: _preview,
-          imageBase64: _image,
-          ...character
-        }) => character,
+        ({ imagePreviewUrl: _preview, ...character }) => character,
       ),
     };
     const serialized = JSON.stringify(payload);
+    if (serialized.length > MAX_STORAGE_CHARS) {
+      return;
+    }
     localStorage.setItem(STORAGE_KEY, serialized);
   } catch {
     // ignore quota / serialization errors
