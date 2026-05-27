@@ -50,6 +50,27 @@ export async function combineVideos(
   return data;
 }
 
+export async function finalizeContinuityVideo(sessionId: string): Promise<CombinedVideoReady> {
+  const { data } = await apiClient.post<CombinedVideoReady>(
+    '/video-generation/finalize-continuity',
+    { sessionId },
+  );
+  return data;
+}
+
+export async function prefetchCharacterProfile(payload: {
+  keyId: string;
+  sessionId: string;
+  imageBase64: string;
+  imageMimeType: string;
+}): Promise<{ profile: string }> {
+  const { data } = await apiClient.post<{ profile: string }>(
+    '/video-generation/character-profile',
+    payload,
+  );
+  return data;
+}
+
 export async function downloadCombinedVideo(sessionId: string): Promise<Blob> {
   const { data } = await apiClient.get<Blob>(
     `/video-generation/session/${encodeURIComponent(sessionId)}/download`,

@@ -4,10 +4,15 @@ import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DownloadIcon from '@mui/icons-material/Download';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import MovieIcon from '@mui/icons-material/Movie';
 import PersonIcon from '@mui/icons-material/Person';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Alert,
   Box,
   Button,
@@ -16,12 +21,14 @@ import {
   CircularProgress,
   Divider,
   FormControl,
+  FormControlLabel,
   IconButton,
   InputLabel,
   LinearProgress,
   Link,
   MenuItem,
   Stack,
+  Switch,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
@@ -36,6 +43,7 @@ import { getGeminiKeys } from '../api/geminiKeys';
 import {
   combineVideos,
   fetchStoredVideoBlob,
+  finalizeContinuityVideo,
   generateScene,
   generateVideo,
   getVideoModels,
@@ -47,6 +55,11 @@ import type {
   VideoPreviewResult,
 } from '../types/videoGeneration';
 import { fileToCharacterImage, toApiCharacter } from '../utils/characterImage';
+import {
+  hasImageCharacter,
+  isContinuityCapableModel,
+  pickContinuityModel,
+} from '../utils/continuityMode';
 import { normalizeVideoBlob } from '../utils/videoBlob';
 import {
   loadVideoGeneratorDraft,
@@ -115,6 +128,7 @@ function getInitialFormState() {
       characters:
         saved.characters.length > 0 ? saved.characters : DEFAULT_CHARACTERS,
       scenes: saved.scenes.length > 0 ? saved.scenes : DEFAULT_SCENES,
+      continuityMode: saved.continuityMode ?? hasImageCharacter(saved.characters),
     };
   }
 
@@ -127,7 +141,21 @@ function getInitialFormState() {
     prompt: '',
     characters: DEFAULT_CHARACTERS,
     scenes: DEFAULT_SCENES,
+    continuityMode: false,
   };
+}
+
+function validateImageCharacters(characters: VideoCharacter[]): string | null {
+  const missingName = characters.find(
+    (c) =>
+      c.inputMode === 'image' &&
+      Boolean(c.imageBase64?.trim()) &&
+      !c.name.trim(),
+  );
+  if (missingName) {
+    return 'Each uploaded character needs a name (e.g. Boy). Reference photos are always used in scene mode.';
+  }
+  return null;
 }
 
 export function VideoGeneratorPage() {
@@ -147,6 +175,9 @@ export function VideoGeneratorPage() {
     initialForm.characters,
   );
   const [scenes, setScenes] = useState<string[]>(initialForm.scenes);
+  const [continuityMode, setContinuityMode] = useState(
+    initialForm.continuityMode ?? false,
+  );
   const skipKeyIdResetRef = useRef(true);
   const resultCardRef = useRef<HTMLDivElement>(null);
   const previewUrlRef = useRef<string | null>(null);
@@ -261,6 +292,7 @@ export function VideoGeneratorPage() {
         prompt,
         characters,
         scenes,
+        continuityMode,
       });
     }, 1000);
 
@@ -274,13 +306,58 @@ export function VideoGeneratorPage() {
     prompt,
     characters,
     scenes,
+    continuityMode,
   ]);
+
+  const imageCharacterCount = useMemo(
+    () =>
+      characters.filter(
+        (c) => c.inputMode === 'image' && Boolean(c.imageBase64?.trim()),
+      ).length,
+    [characters],
+  );
+
+  useEffect(() => {
+    if (mode !== 'scene' || imageCharacterCount === 0) {
+      return;
+    }
+    setContinuityMode(true);
+  }, [mode, imageCharacterCount]);
+
+  useEffect(() => {
+    if (!continuityMode || models.length === 0) {
+      return;
+    }
+    if (!isContinuityCapableModel(model)) {
+      const next = pickContinuityModel(models, model);
+      if (next) {
+        setModel(next);
+      }
+    }
+  }, [continuityMode, models, model]);
 
   const canGenerate = useMemo(() => {
     if (!keyId || !model || isGenerating) return false;
+    if (validateImageCharacters(characters)) return false;
+    if (
+      mode === 'scene' &&
+      continuityMode &&
+      !isContinuityCapableModel(model)
+    ) {
+      return false;
+    }
     if (mode === 'just-video') return Boolean(prompt.trim());
     return scenes.some((s) => s.trim());
-  }, [keyId, model, isGenerating, mode, prompt, scenes]);
+  }, [
+    keyId,
+    model,
+    isGenerating,
+    mode,
+    prompt,
+    scenes,
+    characters,
+    continuityMode,
+  ]);
 
   const handleGenerateJustVideo = async () => {
     setErrorMessage('');
@@ -327,6 +404,19 @@ export function VideoGeneratorPage() {
       return;
     }
 
+    const imageValidationError = validateImageCharacters(characters);
+    if (imageValidationError) {
+      setErrorMessage(imageValidationError);
+      return;
+    }
+
+    if (continuityMode && !isContinuityCapableModel(model)) {
+      setErrorMessage(
+        'Continuity mode requires Veo 3.1 or Veo 3.1 Fast. Select a compatible model or turn off Continuity mode.',
+      );
+      return;
+    }
+
     setErrorMessage('');
     clearVideoPreview();
     setIsGenerating(true);
@@ -334,53 +424,98 @@ export function VideoGeneratorPage() {
 
     const sessionId = createSessionId();
     const apiCharacters = characters.map(toApiCharacter);
+    const sceneDuration = continuityMode ? (8 as const) : durationSeconds;
 
     const totalScenes = validScenes.length;
-    let completedCount = 0;
 
     try {
-      setProgressLabel(`Generating ${totalScenes} scenes in parallel…`);
+      if (continuityMode) {
+        for (let sceneIndex = 0; sceneIndex < totalScenes; sceneIndex += 1) {
+          const label =
+            sceneIndex === 0
+              ? `Scene ${sceneIndex + 1} of ${totalScenes} — generating with reference photo…`
+              : `Scene ${sceneIndex + 1} of ${totalScenes} — extending previous clip…`;
+          setProgressLabel(label);
+          setProgressValue(Math.round((sceneIndex / totalScenes) * 90));
 
-      const sceneTasks = validScenes.map((prompt, sceneIndex) =>
-        generateScene({
-          keyId,
-          model,
+          await generateScene({
+            keyId,
+            model,
+            sessionId,
+            sceneIndex,
+            prompt: validScenes[sceneIndex]!,
+            characters: apiCharacters,
+            aspectRatio,
+            durationSeconds: sceneDuration,
+            continuityMode: true,
+          });
+        }
+
+        setProgressLabel('Archiving continuity video…');
+        setProgressValue(95);
+        const finalized = await finalizeContinuityVideo(sessionId);
+        sessionStorage.setItem(
+          LAST_SCENE_PREVIEW_ID_KEY,
+          finalized.storedVideoId,
+        );
+        setProgressLabel('Loading video preview…');
+        setProgressValue(98);
+
+        const rawBlob = await fetchStoredVideoBlob(finalized.storedVideoId);
+        const blob = await normalizeVideoBlob(rawBlob);
+        applyVideoPreview({
+          previewUrl: URL.createObjectURL(blob),
+          mimeType: blob.type || finalized.mimeType,
+          model: finalized.model,
+          downloadFilename: 'continuity-video.mp4',
+        });
+      } else {
+        let completedCount = 0;
+        setProgressLabel(`Generating ${totalScenes} scenes in parallel…`);
+
+        const sceneTasks = validScenes.map((scenePrompt, sceneIndex) =>
+          generateScene({
+            keyId,
+            model,
+            sessionId,
+            sceneIndex,
+            prompt: scenePrompt,
+            characters: apiCharacters,
+            aspectRatio,
+            durationSeconds: sceneDuration,
+            continuityMode: false,
+          }).then(() => {
+            completedCount += 1;
+            setProgressLabel(
+              `Generated ${completedCount} of ${totalScenes} scenes…`,
+            );
+            setProgressValue(Math.round((completedCount / totalScenes) * 90));
+          }),
+        );
+
+        await Promise.all(sceneTasks);
+
+        setProgressLabel('Combining scenes into final video…');
+        setProgressValue(95);
+
+        const combined = await combineVideos({
           sessionId,
-          sceneIndex,
-          prompt,
-          characters: apiCharacters,
-          aspectRatio,
-          durationSeconds,
-        }).then(() => {
-          completedCount += 1;
-          setProgressLabel(
-            `Generated ${completedCount} of ${totalScenes} scenes…`,
-          );
-          setProgressValue(Math.round((completedCount / totalScenes) * 90));
-        }),
-      );
+          expectedSceneCount: totalScenes,
+        });
+        sessionStorage.setItem(LAST_SCENE_PREVIEW_ID_KEY, combined.storedVideoId);
+        setProgressLabel('Loading video preview…');
+        setProgressValue(98);
 
-      await Promise.all(sceneTasks);
+        const rawBlob = await fetchStoredVideoBlob(combined.storedVideoId);
+        const blob = await normalizeVideoBlob(rawBlob);
+        applyVideoPreview({
+          previewUrl: URL.createObjectURL(blob),
+          mimeType: blob.type || combined.mimeType,
+          model: combined.model,
+          downloadFilename: 'combined-video.mp4',
+        });
+      }
 
-      setProgressLabel('Combining scenes into final video…');
-      setProgressValue(95);
-
-      const combined = await combineVideos({
-        sessionId,
-        expectedSceneCount: totalScenes,
-      });
-      sessionStorage.setItem(LAST_SCENE_PREVIEW_ID_KEY, combined.storedVideoId);
-      setProgressLabel('Loading video preview…');
-      setProgressValue(98);
-
-      const rawBlob = await fetchStoredVideoBlob(combined.storedVideoId);
-      const blob = await normalizeVideoBlob(rawBlob);
-      applyVideoPreview({
-        previewUrl: URL.createObjectURL(blob),
-        mimeType: blob.type || combined.mimeType,
-        model: combined.model,
-        downloadFilename: 'combined-video.mp4',
-      });
       setProgressValue(100);
     } catch (error) {
       const baseMessage = getErrorMessage(
@@ -388,7 +523,9 @@ export function VideoGeneratorPage() {
         'Scene video generation failed. Please try again.',
       );
       setErrorMessage(
-        `${baseMessage} Some scenes may still be running on the server; retry or reduce scene count if you hit rate limits.`,
+        continuityMode
+          ? baseMessage
+          : `${baseMessage} Some scenes may still be running on the server; retry or reduce scene count if you hit rate limits.`,
       );
     } finally {
       setIsGenerating(false);
@@ -454,6 +591,7 @@ export function VideoGeneratorPage() {
             ? {
                 ...c,
                 inputMode: 'image',
+                name: c.name.trim() || 'Boy',
                 imageBase64,
                 imageMimeType,
                 imagePreviewUrl: previewUrl,
@@ -461,6 +599,7 @@ export function VideoGeneratorPage() {
             : c,
         ),
       );
+      setContinuityMode(true);
       setErrorMessage('');
     } catch (error) {
       setErrorMessage(
@@ -636,6 +775,65 @@ export function VideoGeneratorPage() {
               </Alert>
             )}
 
+            {mode === 'scene' && (
+              <Stack spacing={1}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={continuityMode}
+                      onChange={(e) => setContinuityMode(e.target.checked)}
+                      disabled={!keyId || isGenerating}
+                    />
+                  }
+                  label="Continuity mode (extend each scene from the previous clip)"
+                />
+                {continuityMode && (
+                  <Alert severity="info">
+                    Uses Veo 3.1 or 3.1 Fast only. Scenes run sequentially (~several
+                    minutes per step). Each extension adds ~7 seconds to one growing
+                    video — best for a flowing story, not hard cuts. Duration is
+                    fixed at 8 seconds per step while Continuity is on.
+                  </Alert>
+                )}
+                {continuityMode && model && !isContinuityCapableModel(model) && (
+                  <Alert severity="warning">
+                    Selected model does not support video extension. Choose Veo 3.1
+                    or Veo 3.1 Fast.
+                  </Alert>
+                )}
+              </Stack>
+            )}
+
+            <Accordion disableGutters sx={{ bgcolor: 'action.hover' }}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                  <LightbulbOutlinedIcon fontSize="small" color="primary" />
+                  <Typography variant="subtitle2">Prompt tips</Typography>
+                </Stack>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Typography variant="body2" component="ul" sx={{ m: 0, pl: 2.5 }}>
+                  <li>Upload a photo and set the character name once.</li>
+                  <li>
+                    In scenes, describe action, camera, and mood — avoid redefining
+                    face, skin tone, or sweater color every scene.
+                  </li>
+                  <li>
+                    OK: &quot;same striped sweater, more torn at elbows&quot; — not
+                    &quot;yellow sweater&quot; unless intentional.
+                  </li>
+                  <li>
+                    With Continuity on, write what happens next in the same world,
+                    not a full visual reset.
+                  </li>
+                  <li>
+                    Reference photos are always attached in scene mode (up to 3).
+                    Keep one protagonist when possible.
+                  </li>
+                </Typography>
+              </AccordionDetails>
+            </Accordion>
+
             <Box>
               <Stack
                 direction="row"
@@ -661,9 +859,9 @@ export function VideoGeneratorPage() {
                 </Button>
               </Stack>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Write a description or upload a photo. Mention character names in
-                your scene or video prompt to use their reference images (up to 3
-                per scene).
+                Write a description or upload a photo. In scene mode, uploaded
+                reference photos are always sent to Veo (up to 3). In Just video
+                mode, mention the character name in your prompt to attach refs.
               </Typography>
               <Stack spacing={2}>
                 {characters.map((character, index) => (
@@ -683,7 +881,12 @@ export function VideoGeneratorPage() {
                             }
                             sx={{ minWidth: 140 }}
                             disabled={!keyId}
-                            helperText="Use this name in prompts"
+                            required={character.inputMode === 'image'}
+                            helperText={
+                              character.inputMode === 'image'
+                                ? 'Required for uploaded characters'
+                                : 'Use this name in prompts'
+                            }
                           />
                           <ToggleButtonGroup
                             exclusive
@@ -767,9 +970,9 @@ export function VideoGeneratorPage() {
                               />
                             )}
                             <Typography variant="body2" color="text.secondary">
-                              JPEG, PNG, or WebP up to 10 MB. Mention &quot;
-                              {character.name || 'character name'}&quot; in your
-                              prompt to apply this look.
+                              JPEG, PNG, or WebP up to 10 MB. This photo is always
+                              used in scene mode. You can say &quot;the boy&quot; or
+                              &quot;{character.name || 'Boy'}&quot; in prompts.
                             </Typography>
                           </Stack>
                         )}
@@ -886,7 +1089,9 @@ export function VideoGeneratorPage() {
                 {isGenerating
                   ? 'Generating…'
                   : mode === 'scene'
-                    ? 'Generate & combine scenes'
+                    ? continuityMode
+                      ? 'Generate continuity video'
+                      : 'Generate & combine scenes'
                     : 'Generate video'}
               </Button>
             </Box>
