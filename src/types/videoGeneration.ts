@@ -82,3 +82,41 @@ export interface StoredVideoItem {
   sceneCount: number | null;
   createdAt: string;
 }
+
+export interface SceneGenerationErrorBody {
+  message: string;
+  failedSceneIndex: number;
+  sessionId: string;
+  completedSceneIndices?: number[];
+}
+
+export interface SessionSceneStatus {
+  index: number;
+  status: 'ready' | 'missing';
+}
+
+export interface SessionStatusResult {
+  sessionId: string;
+  continuityMode?: boolean;
+  scenes: SessionSceneStatus[];
+  completedCount: number;
+}
+
+export interface RecoverPartialPayload {
+  sessionId: string;
+  continuityMode: boolean;
+  failedSceneIndex?: number;
+  totalScenes?: number;
+}
+
+export interface RecoverPartialResult {
+  partialVideo?: CombinedVideoReady;
+  completedSceneIndices: number[];
+  failedSceneIndex?: number;
+  message: string;
+}
+
+export interface PartialScenePreview {
+  sceneIndex: number;
+  previewUrl: string;
+}

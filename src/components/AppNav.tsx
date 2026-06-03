@@ -3,6 +3,7 @@ import ImageIcon from '@mui/icons-material/Image';
 import KeyIcon from '@mui/icons-material/Key';
 import MovieIcon from '@mui/icons-material/Movie';
 import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import PinIcon from '@mui/icons-material/PushPin';
 import { Tab, Tabs } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -27,6 +28,12 @@ const allTabs = [
     label: 'AI Video Generation',
     path: '/video-generator',
     icon: <MovieIcon sx={{ fontSize: 18 }} />,
+    adminOnly: true,
+  },
+  {
+    label: 'Character Replacement',
+    path: '/character-replacement',
+    icon: <SwapHorizIcon sx={{ fontSize: 18 }} />,
     adminOnly: true,
   },
   {

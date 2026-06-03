@@ -1,45 +1,33 @@
-import { Box, Button, Typography } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
-import { LANDING_FONT } from './welcomeStyles';
+import { LandingButton } from './LandingButton';
+import { MaterialSymbol } from './MaterialSymbol';
+import { WelcomeSection } from './WelcomeSection';
 
 export function WelcomeCtaBand() {
   return (
-    <Box
-      sx={{
-        py: { xs: 5, md: 6 },
-        px: 3,
-        borderRadius: 4,
-        textAlign: 'center',
-        background:
-          'linear-gradient(135deg, rgba(230,0,35,0.2) 0%, rgba(99,102,241,0.25) 50%, rgba(30,27,75,0.6) 100%)',
-        border: '1px solid rgba(255,255,255,0.12)',
-        backdropFilter: 'blur(12px)',
-      }}
-    >
-      <Typography
-        variant="h5"
-        sx={{ fontFamily: LANDING_FONT, fontWeight: 700, letterSpacing: '-0.02em', mb: 1 }}
-      >
-        Ready to automate?
-      </Typography>
-      <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)', mb: 3 }}>
-        Start scheduling and creating content in minutes.
-      </Typography>
-      <Button
-        component={RouterLink}
-        to="/login"
-        variant="contained"
-        size="large"
-        sx={{
-          px: 4,
-          bgcolor: '#E60023',
-          fontFamily: LANDING_FONT,
-          fontWeight: 600,
-          '&:hover': { bgcolor: '#AD081B' },
-        }}
-      >
-        Get started
-      </Button>
-    </Box>
+    <WelcomeSection className="py-stack-lg text-center">
+      <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-landing-primary-container/20 to-landing-surface-container py-20 px-8 border border-white/5">
+        <div className="absolute inset-0 hero-glow opacity-30" />
+        <h2 className="font-display-lg text-display-lg-mobile md:text-headline-md mb-6 relative z-10">
+          Ready to automate?
+        </h2>
+        <p className="font-body-lg text-body-lg text-landing-on-surface-variant max-w-2xl mx-auto mb-10 relative z-10">
+          Join over 5,000+ creators and brands who are scaling their social presence effortlessly.
+        </p>
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 relative z-10">
+          <LandingButton to="/login" className="w-full sm:w-auto px-10 py-4 text-xl hover:scale-105">
+            Get started for free
+          </LandingButton>
+          <p className="text-landing-on-surface-variant text-sm font-label-caps uppercase">
+            No credit card required
+          </p>
+        </div>
+        <div className="absolute top-10 left-10 opacity-10 animate-bounce pointer-events-none">
+          <MaterialSymbol name="rocket_launch" className="text-6xl" />
+        </div>
+        <div className="absolute bottom-10 right-10 opacity-10 animate-pulse pointer-events-none">
+          <MaterialSymbol name="auto_graph" className="text-6xl" />
+        </div>
+      </div>
+    </WelcomeSection>
   );
 }

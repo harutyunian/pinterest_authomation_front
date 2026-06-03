@@ -6,6 +6,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { theme } from './theme/theme';
 import { installPreventNativeFormReload } from './utils/preventNativeFormReload';
+import './index.css';
 
 installPreventNativeFormReload();
 

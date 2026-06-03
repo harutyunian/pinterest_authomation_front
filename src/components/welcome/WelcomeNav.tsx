@@ -1,51 +1,48 @@
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import { AppBar, Box, Button, Container, Toolbar, Typography } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
-import { LANDING_FONT } from './welcomeStyles';
+import { LandingButton } from './LandingButton';
+import { MaterialSymbol } from './MaterialSymbol';
+import { NAV_LINKS } from './welcome.constants';
+import { useScrollHeader } from './useScrollHeader';
 
 export function WelcomeNav() {
+  const scrolled = useScrollHeader();
+
   return (
-    <AppBar
-      position="sticky"
-      elevation={0}
-      sx={{
-        bgcolor: 'rgba(11,13,18,0.72)',
-        backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-      }}
+    <header
+      className={`fixed top-0 w-full z-50 backdrop-blur-xl border-b border-white/10 transition-all duration-200 ${
+        scrolled ? 'bg-landing-background/95 shadow-md' : 'bg-landing-background/80 shadow-sm'
+      }`}
     >
-      <Container maxWidth="lg">
-        <Toolbar disableGutters sx={{ minHeight: { xs: 56, md: 64 }, gap: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1 }}>
-            <AutoAwesomeIcon sx={{ color: '#E60023', fontSize: 28 }} />
-            <Typography
-              variant="h6"
-              sx={{
-                fontFamily: LANDING_FONT,
-                fontWeight: 700,
-                letterSpacing: '-0.02em',
-                color: '#fff',
-              }}
+      <div className="flex justify-between items-center px-gutter max-w-container-max mx-auto h-16">
+        <div className="flex items-center gap-2">
+          <MaterialSymbol name="auto_awesome" className="text-landing-primary text-2xl" filled />
+          <span className="font-display-lg text-headline-sm font-extrabold text-landing-primary">
+            Social Automation
+          </span>
+        </div>
+        <nav className="hidden md:flex gap-8">
+          {NAV_LINKS.map(({ label, href, active }) => (
+            <a
+              key={label}
+              href={href}
+              className={`font-button-text text-button-text transition-colors duration-200 ${
+                active
+                  ? 'text-landing-primary font-bold border-b-2 border-landing-primary pb-1'
+                  : 'text-landing-on-surface-variant hover:text-landing-primary'
+              }`}
             >
-              Social Automation
-            </Typography>
-          </Box>
-          <Button
-            component={RouterLink}
-            to="/login"
-            variant="outlined"
-            size="small"
-            sx={{
-              color: '#fff',
-              borderColor: 'rgba(255,255,255,0.35)',
-              fontFamily: LANDING_FONT,
-              '&:hover': { borderColor: '#fff', bgcolor: 'rgba(255,255,255,0.06)' },
-            }}
-          >
+              {label}
+            </a>
+          ))}
+        </nav>
+        <div className="flex items-center gap-4">
+          <LandingButton to="/login" variant="ghost" className="hidden md:inline-flex">
             Sign in
-          </Button>
-        </Toolbar>
-      </Container>
-    </AppBar>
+          </LandingButton>
+          <LandingButton to="/login" className="px-6 py-2">
+            Get Started
+          </LandingButton>
+        </div>
+      </div>
+    </header>
   );
 }

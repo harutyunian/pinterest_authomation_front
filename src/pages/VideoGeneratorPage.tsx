@@ -42,13 +42,16 @@ import { AppSelect } from '../components/AppSelect';
 import { getGeminiKeys } from '../api/geminiKeys';
 import {
   combineVideos,
+  fetchSessionSceneBlob,
   fetchStoredVideoBlob,
   finalizeContinuityVideo,
   generateScene,
   generateVideo,
   getVideoModels,
+  recoverPartialSession,
 } from '../api/videoGeneration';
 import type {
+  PartialScenePreview,
   VideoCharacter,
   VideoCharacterInputMode,
   VideoGenerationMode,
@@ -61,6 +64,11 @@ import {
   pickContinuityModel,
 } from '../utils/continuityMode';
 import { normalizeVideoBlob } from '../utils/videoBlob';
+import {
+  formatCompletedSceneRange,
+  formatPartialFailureMessage,
+  parseSceneError,
+} from '../utils/sceneError';
 import {
   loadVideoGeneratorDraft,
   saveVideoGeneratorDraft,
@@ -185,6 +193,8 @@ export function VideoGeneratorPage() {
     null,
   );
   const [errorMessage, setErrorMessage] = useState('');
+  const [partialRecoveryMessage, setPartialRecoveryMessage] = useState('');
+  const [partialScenes, setPartialScenes] = useState<PartialScenePreview[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [progressLabel, setProgressLabel] = useState('');
   const [progressValue, setProgressValue] = useState(0);
@@ -205,6 +215,15 @@ export function VideoGeneratorPage() {
   });
 
   const models = modelsData?.models ?? [];
+
+  const clearPartialScenes = () => {
+    setPartialScenes((prev) => {
+      for (const scene of prev) {
+        revokePreviewUrl(scene.previewUrl);
+      }
+      return [];
+    });
+  };
 
   const clearVideoPreview = () => {
     setVideoPreview((prev) => {
@@ -394,6 +413,93 @@ export function VideoGeneratorPage() {
     }
   };
 
+  const loadPartialScenePreviews = async (
+    sessionId: string,
+    indices: number[],
+  ): Promise<void> => {
+    const loaded: PartialScenePreview[] = [];
+    for (const sceneIndex of indices) {
+      const rawBlob = await fetchSessionSceneBlob(sessionId, sceneIndex);
+      const blob = await normalizeVideoBlob(rawBlob);
+      loaded.push({
+        sceneIndex,
+        previewUrl: URL.createObjectURL(blob),
+      });
+    }
+    clearPartialScenes();
+    setPartialScenes(loaded);
+  };
+
+  const handleSceneFailure = async (
+    sessionId: string,
+    useContinuityMode: boolean,
+    totalScenes: number,
+    error: unknown,
+    failedSceneIndex?: number,
+    extraFailedIndices?: number[],
+  ): Promise<void> => {
+    const parsed = parseSceneError(
+      error,
+      'Scene video generation failed. Please try again.',
+    );
+    const failedIndex = parsed.failedSceneIndex ?? failedSceneIndex;
+
+    try {
+      const recovery = await recoverPartialSession({
+        sessionId,
+        continuityMode: useContinuityMode,
+        failedSceneIndex: failedIndex,
+        totalScenes,
+      });
+
+      if (recovery.partialVideo?.storedVideoId) {
+        const rawBlob = await fetchStoredVideoBlob(
+          recovery.partialVideo.storedVideoId,
+        );
+        const blob = await normalizeVideoBlob(rawBlob);
+        applyVideoPreview({
+          previewUrl: URL.createObjectURL(blob),
+          mimeType: blob.type || recovery.partialVideo.mimeType,
+          model: recovery.partialVideo.model,
+          downloadFilename: useContinuityMode
+            ? 'partial-continuity-video.mp4'
+            : 'partial-combined-video.mp4',
+        });
+      }
+
+      const indices =
+        recovery.completedSceneIndices.length > 0
+          ? recovery.completedSceneIndices
+          : (parsed.completedSceneIndices ?? []);
+
+      if (indices.length > 0) {
+        await loadPartialScenePreviews(sessionId, indices);
+      }
+
+      setPartialRecoveryMessage(recovery.message);
+      let message = formatPartialFailureMessage(
+        parsed,
+        indices.length,
+      );
+      if (extraFailedIndices && extraFailedIndices.length > 1) {
+        const failedLabels = formatCompletedSceneRange(extraFailedIndices);
+        message = `${message} Failed scenes: ${failedLabels}.`;
+      }
+      setErrorMessage(message);
+    } catch {
+      const indices = parsed.completedSceneIndices ?? [];
+      if (indices.length > 0) {
+        await loadPartialScenePreviews(sessionId, indices);
+        setErrorMessage(
+          formatPartialFailureMessage(parsed, indices.length),
+        );
+      } else {
+        setErrorMessage(parsed.message);
+      }
+      setPartialRecoveryMessage('');
+    }
+  };
+
   const handleGenerateScenes = async () => {
     const validScenes = scenes
       .map((s) => s.trim())
@@ -418,6 +524,8 @@ export function VideoGeneratorPage() {
     }
 
     setErrorMessage('');
+    setPartialRecoveryMessage('');
+    clearPartialScenes();
     clearVideoPreview();
     setIsGenerating(true);
     setProgressValue(0);
@@ -438,17 +546,28 @@ export function VideoGeneratorPage() {
           setProgressLabel(label);
           setProgressValue(Math.round((sceneIndex / totalScenes) * 90));
 
-          await generateScene({
-            keyId,
-            model,
-            sessionId,
-            sceneIndex,
-            prompt: validScenes[sceneIndex]!,
-            characters: apiCharacters,
-            aspectRatio,
-            durationSeconds: sceneDuration,
-            continuityMode: true,
-          });
+          try {
+            await generateScene({
+              keyId,
+              model,
+              sessionId,
+              sceneIndex,
+              prompt: validScenes[sceneIndex]!,
+              characters: apiCharacters,
+              aspectRatio,
+              durationSeconds: sceneDuration,
+              continuityMode: true,
+            });
+          } catch (error) {
+            await handleSceneFailure(
+              sessionId,
+              true,
+              totalScenes,
+              error,
+              sceneIndex,
+            );
+            return;
+          }
         }
 
         setProgressLabel('Archiving continuity video…');
@@ -493,7 +612,36 @@ export function VideoGeneratorPage() {
           }),
         );
 
-        await Promise.all(sceneTasks);
+        const results = await Promise.allSettled(sceneTasks);
+        const failedIndices = results
+          .map((result, index) => (result.status === 'rejected' ? index : -1))
+          .filter((index) => index >= 0);
+
+        if (failedIndices.length > 0) {
+          const firstRejected = results[failedIndices[0]!];
+          const firstError =
+            firstRejected?.status === 'rejected'
+              ? firstRejected.reason
+              : undefined;
+
+          if (failedIndices.length === totalScenes) {
+            const parsed = parseSceneError(
+              firstError,
+              'Scene video generation failed. Please try again.',
+            );
+            setErrorMessage(parsed.message);
+          } else {
+            await handleSceneFailure(
+              sessionId,
+              false,
+              totalScenes,
+              firstError,
+              failedIndices[0],
+              failedIndices,
+            );
+          }
+          return;
+        }
 
         setProgressLabel('Combining scenes into final video…');
         setProgressValue(95);
@@ -516,16 +664,15 @@ export function VideoGeneratorPage() {
         });
       }
 
+      setPartialRecoveryMessage('');
+      clearPartialScenes();
       setProgressValue(100);
     } catch (error) {
-      const baseMessage = getErrorMessage(
+      await handleSceneFailure(
+        sessionId,
+        continuityMode,
+        totalScenes,
         error,
-        'Scene video generation failed. Please try again.',
-      );
-      setErrorMessage(
-        continuityMode
-          ? baseMessage
-          : `${baseMessage} Some scenes may still be running on the server; retry or reduce scene count if you hit rate limits.`,
       );
     } finally {
       setIsGenerating(false);
@@ -1103,6 +1250,62 @@ export function VideoGeneratorPage() {
         <Alert severity="error" sx={{ mb: 3 }}>
           {errorMessage}
         </Alert>
+      )}
+
+      {partialRecoveryMessage && (
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          {partialRecoveryMessage}
+        </Alert>
+      )}
+
+      {partialScenes.length > 0 && !isGenerating && (
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+              Completed scenes
+            </Typography>
+            <Stack spacing={2}>
+              {partialScenes.map((scene) => (
+                <Box key={scene.sceneIndex}>
+                  <Stack
+                    direction="row"
+                    sx={{
+                      mb: 1,
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <Typography variant="subtitle2">
+                      Scene {scene.sceneIndex + 1}
+                    </Typography>
+                    <Button
+                      component="a"
+                      href={scene.previewUrl}
+                      download={`scene-${scene.sceneIndex + 1}.mp4`}
+                      variant="outlined"
+                      size="small"
+                      startIcon={<DownloadIcon />}
+                    >
+                      Download
+                    </Button>
+                  </Stack>
+                  <Box
+                    component="video"
+                    src={scene.previewUrl}
+                    controls
+                    sx={{
+                      display: 'block',
+                      maxWidth: '100%',
+                      borderRadius: 1,
+                      border: 1,
+                      borderColor: 'divider',
+                    }}
+                  />
+                </Box>
+              ))}
+            </Stack>
+          </CardContent>
+        </Card>
       )}
 
       {isGenerating && (
