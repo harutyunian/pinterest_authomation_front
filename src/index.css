@@ -9,6 +9,64 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Landing page design tokens (MD3 dark) */
+  --color-landing-primary: #ffb3ad;
+  --color-landing-primary-container: #e60023;
+  --color-landing-on-primary-container: #fff7f6;
+  --color-landing-on-surface: #e0e3e5;
+  --color-landing-on-surface-variant: #e8bcb8;
+  --color-landing-surface: #101415;
+  --color-landing-background: #101415;
+  --color-landing-surface-container: #1d2022;
+  --color-landing-surface-container-low: #191c1e;
+  --color-landing-surface-container-lowest: #0b0f10;
+
+  --spacing-gutter: 24px;
+  --spacing-stack-lg: 48px;
+  --spacing-stack-md: 24px;
+  --spacing-stack-sm: 12px;
+  --spacing-margin-mobile: 16px;
+  --spacing-margin-desktop: 48px;
+  --spacing-base: 8px;
+  --max-width-container-max: 1280px;
+
+  --font-display-lg: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-headline-md: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-headline-sm: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-button-text: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body-lg: 'Inter', system-ui, sans-serif;
+  --font-body-md: 'Inter', system-ui, sans-serif;
+  --font-label-caps: 'JetBrains Mono', ui-monospace, monospace;
+
+  --text-display-lg: 64px;
+  --text-display-lg--line-height: 72px;
+  --text-display-lg--letter-spacing: -0.02em;
+  --text-display-lg--font-weight: 800;
+  --text-display-lg-mobile: 40px;
+  --text-display-lg-mobile--line-height: 48px;
+  --text-display-lg-mobile--letter-spacing: -0.02em;
+  --text-display-lg-mobile--font-weight: 800;
+  --text-headline-md: 32px;
+  --text-headline-md--line-height: 40px;
+  --text-headline-md--font-weight: 700;
+  --text-headline-sm: 24px;
+  --text-headline-sm--line-height: 32px;
+  --text-headline-sm--font-weight: 700;
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 28px;
+  --text-body-lg--font-weight: 400;
+  --text-body-md: 16px;
+  --text-body-md--line-height: 24px;
+  --text-body-md--font-weight: 400;
+  --text-button-text: 15px;
+  --text-button-text--line-height: 20px;
+  --text-button-text--font-weight: 600;
+  --text-label-caps: 12px;
+  --text-label-caps--line-height: 16px;
+  --text-label-caps--letter-spacing: 0.05em;
+  --text-label-caps--font-weight: 600;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

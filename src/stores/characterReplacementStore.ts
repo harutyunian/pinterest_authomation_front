@@ -53,8 +53,6 @@ const initialGenerationState = {
   progressMessage: '',
   estimatedSecondsRemaining: null,
   error: null,
-  sourceVideoAssetId: null,
-  referenceImageAssetId: null,
 };
 
 export const useCharacterReplacementStore = create<CharacterReplacementState>(
@@ -104,6 +102,8 @@ export const useCharacterReplacementStore = create<CharacterReplacementState>(
         settings: { ...DEFAULT_ADVANCED_SETTINGS },
         sourceVideo: null,
         referenceImage: null,
+        sourceVideoAssetId: null,
+        referenceImageAssetId: null,
         gallery: [],
       }),
   }),

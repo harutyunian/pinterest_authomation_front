@@ -73,9 +73,6 @@ export function useCharacterReplacementGeneration() {
 
   const handleCompletedJob = useCallback(
     async (jobId: string, resultMimeType?: string) => {
-      setStatus('completed');
-      setProgress(100, 'Generation complete');
-
       const blob = await downloadResult(jobId);
       const previewUrl = URL.createObjectURL(blob);
       const item: GeneratedVideoItem = {
@@ -89,8 +86,20 @@ export function useCharacterReplacementGeneration() {
         resolution: settings.resolution,
       };
       addGalleryItem(item);
+      setStatus('idle');
+      setProgress(0, '');
+      setEstimatedSecondsRemaining(null);
+      setError(null);
     },
-    [addGalleryItem, prompt, setProgress, setStatus, settings.resolution],
+    [
+      addGalleryItem,
+      prompt,
+      setError,
+      setEstimatedSecondsRemaining,
+      setProgress,
+      setStatus,
+      settings.resolution,
+    ],
   );
 
   const pollJobStatus = useCallback(
