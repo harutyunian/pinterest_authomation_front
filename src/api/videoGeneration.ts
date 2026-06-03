@@ -6,6 +6,9 @@ import type {
   GeneratedVideo,
   GenerateScenePayload,
   GenerateVideoPayload,
+  RecoverPartialPayload,
+  RecoverPartialResult,
+  SessionStatusResult,
   StoredVideoItem,
   VideoModelsResponse,
 } from '../types/videoGeneration';
@@ -54,6 +57,36 @@ export async function finalizeContinuityVideo(sessionId: string): Promise<Combin
   const { data } = await apiClient.post<CombinedVideoReady>(
     '/video-generation/finalize-continuity',
     { sessionId },
+  );
+  return data;
+}
+
+export async function getSessionStatus(
+  sessionId: string,
+): Promise<SessionStatusResult> {
+  const { data } = await apiClient.get<SessionStatusResult>(
+    `/video-generation/session/${encodeURIComponent(sessionId)}/status`,
+  );
+  return data;
+}
+
+export async function fetchSessionSceneBlob(
+  sessionId: string,
+  sceneIndex: number,
+): Promise<Blob> {
+  const { data } = await apiClient.get<Blob>(
+    `/video-generation/session/${encodeURIComponent(sessionId)}/scene/${sceneIndex}/stream`,
+    { responseType: 'blob' },
+  );
+  return data;
+}
+
+export async function recoverPartialSession(
+  payload: RecoverPartialPayload,
+): Promise<RecoverPartialResult> {
+  const { data } = await apiClient.post<RecoverPartialResult>(
+    '/video-generation/recover-partial',
+    payload,
   );
   return data;
 }
