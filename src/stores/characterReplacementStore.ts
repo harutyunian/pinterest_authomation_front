@@ -64,6 +64,8 @@ export const useCharacterReplacementStore = create<CharacterReplacementState>(
     settings: { ...DEFAULT_ADVANCED_SETTINGS },
     sourceVideo: null,
     referenceImage: null,
+    sourceVideoAssetId: null,
+    referenceImageAssetId: null,
     gallery: [],
 
     setKeyId: (keyId) => set({ keyId }),
