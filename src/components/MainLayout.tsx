@@ -1,95 +1,39 @@
-import LogoutIcon from '@mui/icons-material/Logout';
-import PinterestIcon from '@mui/icons-material/Pinterest';
-import {
-  AppBar,
-  Avatar,
-  Box,
-  Chip,
-  Container,
-  IconButton,
-  Link,
-  Menu,
-  MenuItem,
-  Toolbar,
-  Typography,
-} from '@mui/material';
-import { useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import { Link as RouterLink, Outlet, useNavigate } from 'react-router-dom';
-import { AppNav } from './AppNav';
-import { useAuthStore } from '../stores/authStore';
+import { Box, Link, Typography } from '@mui/material';
+import { Link as RouterLink, Outlet } from 'react-router-dom';
+import { AppHeader } from './layout/AppHeader';
+import { AppSidebar } from './layout/AppSidebar';
+import { useAdminColors } from '../theme/ThemeModeProvider';
 
 export function MainLayout() {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
-  const handleLogout = () => {
-    queryClient.removeQueries();
-    logout();
-    navigate('/login');
-  };
+  const adminColors = useAdminColors();
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      <AppBar
-        position="sticky"
-        elevation={0}
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex' }}>
+      <AppSidebar />
+      <Box
+        component="main"
         sx={{
-          bgcolor: 'background.paper',
-          color: 'text.primary',
-          borderBottom: '1px solid',
-          borderColor: 'divider',
+          flex: 1,
+          ml: `${adminColors.sidebarWidth}px`,
+          minWidth: 0,
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
-        <Toolbar>
-          <PinterestIcon sx={{ color: 'primary.main', mr: 1 }} />
-          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 700 }}>
-            Pinterest Automation
-          </Typography>
-          {user?.role === 'admin' && (
-            <Chip
-              label="Admin"
-              size="small"
-              color="primary"
-              sx={{ mr: 2, fontWeight: 600 }}
-            />
-          )}
-          <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-            <Avatar sx={{ bgcolor: 'primary.main', width: 36, height: 36 }}>
-              {user?.username?.[0]?.toUpperCase() ?? '?'}
-            </Avatar>
-          </IconButton>
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={() => setAnchorEl(null)}
+        <AppHeader />
+        <Box sx={{ flex: 1, px: { xs: 2, md: 3 }, py: 3, maxWidth: 1400 }}>
+          <Outlet />
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ mt: 6, display: 'block', textAlign: 'center' }}
           >
-            <MenuItem disabled>
-              <Typography variant="body2">{user?.username}</Typography>
-            </MenuItem>
-            <MenuItem onClick={handleLogout}>
-              <LogoutIcon fontSize="small" sx={{ mr: 1 }} />
-              Logout
-            </MenuItem>
-          </Menu>
-        </Toolbar>
-      </AppBar>
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <AppNav />
-        <Outlet />
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ mt: 6, display: 'block', textAlign: 'center' }}
-        >
-          <Link component={RouterLink} to="/privacy" underline="hover">
-            Политика конфиденциальности
-          </Link>
-        </Typography>
-      </Container>
+            <Link component={RouterLink} to="/privacy" underline="hover" color="inherit">
+              Политика конфиденциальности
+            </Link>
+          </Typography>
+        </Box>
+      </Box>
     </Box>
   );
 }

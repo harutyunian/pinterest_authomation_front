@@ -1,14 +1,12 @@
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import DownloadIcon from '@mui/icons-material/Download';
-import ImageIcon from '@mui/icons-material/Image';
 import {
   Alert,
   Box,
   Button,
-  Card,
-  CardContent,
   CircularProgress,
   FormControl,
+  Grid,
   InputLabel,
   Link,
   MenuItem,
@@ -16,6 +14,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { AdminCard } from '../components/layout/AdminCard';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
@@ -104,29 +103,19 @@ export function ImageGeneratorPage() {
 
   return (
     <Box>
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.5 }}>
-        <ImageIcon color="primary" />
-        <Typography variant="h4" sx={{ fontWeight: 700 }}>
-          Generate Image
-        </Typography>
-      </Stack>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Select a Gemini API key and model, describe your image, and generate it
-        with Google Gemini. Images are not saved to the database.
-      </Typography>
-
       {!keysLoading && keys.length === 0 && (
         <Alert severity="warning" sx={{ mb: 3 }}>
           No Gemini API keys found.{' '}
-          <Link component={RouterLink} to="/gemini-keys">
-            Add a key on the Gemini Keys page
+          <Link component={RouterLink} to="/settings">
+            Add a key in Settings
           </Link>{' '}
           to get started.
         </Alert>
       )}
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, md: 5 }}>
+      <AdminCard>
           <Stack spacing={3}>
             <FormControl fullWidth disabled={keysLoading || keys.length === 0}>
               <InputLabel id="image-gen-key-label">API key</InputLabel>
@@ -209,9 +198,10 @@ export function ImageGeneratorPage() {
               </Button>
             </Box>
           </Stack>
-        </CardContent>
-      </Card>
+      </AdminCard>
+        </Grid>
 
+        <Grid size={{ xs: 12, md: 7 }}>
       {errorMessage && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {errorMessage}
@@ -219,8 +209,7 @@ export function ImageGeneratorPage() {
       )}
 
       {generateMutation.isPending && (
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
+        <AdminCard>
             <Stack
               direction="row"
               spacing={2}
@@ -231,13 +220,11 @@ export function ImageGeneratorPage() {
                 Generating image… This may take up to a minute.
               </Typography>
             </Stack>
-          </CardContent>
-        </Card>
+        </AdminCard>
       )}
 
       {generatedImage && !generateMutation.isPending && (
-        <Card>
-          <CardContent>
+        <AdminCard>
             <Stack
               direction="row"
               sx={{
@@ -247,7 +234,7 @@ export function ImageGeneratorPage() {
               }}
             >
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                Result
+                Generated assets
               </Typography>
               <Button
                 component="a"
@@ -268,17 +255,26 @@ export function ImageGeneratorPage() {
                 display: 'block',
                 maxWidth: '100%',
                 height: 'auto',
-                borderRadius: 1,
+                borderRadius: 2,
                 border: 1,
                 borderColor: 'divider',
               }}
             />
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
               Model: {generatedImage.model}
             </Typography>
-          </CardContent>
-        </Card>
+        </AdminCard>
       )}
+
+      {!generateMutation.isPending && !generatedImage && !errorMessage && (
+        <AdminCard>
+          <Typography variant="body2" color="text.secondary" sx={{ py: 6, textAlign: 'center' }}>
+            Your generated images will appear here. Fill in the form and click Generate.
+          </Typography>
+        </AdminCard>
+      )}
+        </Grid>
+      </Grid>
     </Box>
   );
 }

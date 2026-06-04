@@ -98,7 +98,7 @@ export function CharacterReplacementPageContent() {
       {!keysLoading && keys.length === 0 && (
         <Alert severity="warning" sx={{ mb: 3 }}>
           No Gemini API keys found.{' '}
-          <Link component={RouterLink} to="/gemini-keys">
+          <Link component={RouterLink} to="/settings">
             Add a key on the Gemini Keys page
           </Link>{' '}
           to get started.
