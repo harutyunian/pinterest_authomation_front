@@ -1,8 +1,11 @@
 import PinterestIcon from '@mui/icons-material/Pinterest';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, alpha } from '@mui/material';
 import { Outlet } from 'react-router-dom';
+import { useAdminColors } from '../theme/ThemeModeProvider';
 
 export function AuthLayout() {
+  const adminColors = useAdminColors();
+
   return (
     <Box
       sx={{
@@ -11,7 +14,8 @@ export function AuthLayout() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #fff5f6 0%, #f5f5f5 50%, #ffffff 100%)',
+        bgcolor: adminColors.bgDefault,
+        backgroundImage: `radial-gradient(ellipse at top, ${alpha(adminColors.accent, 0.15)} 0%, transparent 50%)`,
         px: 2,
       }}
     >

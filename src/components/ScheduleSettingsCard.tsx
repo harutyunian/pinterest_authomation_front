@@ -33,7 +33,12 @@ import {
 const PRESET_HOURS = [1, 2, 3, 4, 5] as const;
 const MAX_INTERVAL_HOURS = 5;
 
-export function ScheduleSettingsCard() {
+type ScheduleSettingsCardProps = {
+  /** When true, omits outer bottom margin (used inside Settings page) */
+  embedded?: boolean;
+};
+
+export function ScheduleSettingsCard({ embedded = false }: ScheduleSettingsCardProps) {
   const queryClient = useQueryClient();
   const userId = useAuthStore((s) => s.user?.id);
 
@@ -92,7 +97,7 @@ export function ScheduleSettingsCard() {
   }, [timezone]);
 
   return (
-    <Card sx={{ mb: 4 }}>
+    <Card sx={{ mb: embedded ? 0 : 4 }}>
       <CardContent sx={{ p: 3 }}>
         <Stack direction="row" spacing={1} sx={{ mb: 1, alignItems: 'center' }}>
           <ScheduleIcon color="primary" />

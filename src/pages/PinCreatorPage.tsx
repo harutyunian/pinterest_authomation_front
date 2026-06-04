@@ -1,7 +1,6 @@
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DownloadIcon from '@mui/icons-material/Download';
-import PinIcon from '@mui/icons-material/PushPin';
 import {
   Alert,
   Box,
@@ -12,6 +11,7 @@ import {
   Chip,
   CircularProgress,
   FormControl,
+  Grid,
   LinearProgress,
   InputLabel,
   Link,
@@ -20,6 +20,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import { AdminCard } from '../components/layout/AdminCard';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
@@ -269,18 +270,6 @@ export function PinCreatorPage() {
 
   return (
     <Box>
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.5 }}>
-        <PinIcon color="primary" />
-        <Typography variant="h4" sx={{ fontWeight: 700 }}>
-          Pin Creator — Home Decor
-        </Typography>
-      </Stack>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Generate Pinterest title ideas for the home decor niche, then click a
-        title to create description, hashtags, and a vertical pin image. Nothing
-        is saved to the database.
-      </Typography>
-
       {successMessage && (
         <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccessMessage('')}>
           {successMessage}
@@ -298,15 +287,17 @@ export function PinCreatorPage() {
       {!keysLoading && keys.length === 0 && (
         <Alert severity="warning" sx={{ mb: 3 }}>
           No Gemini API keys found.{' '}
-          <Link component={RouterLink} to="/gemini-keys">
-            Add a key on the Gemini Keys page
+          <Link component={RouterLink} to="/settings">
+            Add a key in Settings
           </Link>{' '}
           to get started.
         </Alert>
       )}
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <Stack spacing={3}>
+      <AdminCard>
           <Stack spacing={2}>
             <Stack
               direction="row"
@@ -462,12 +453,13 @@ export function PinCreatorPage() {
               </Stack>
             )}
           </Stack>
-        </CardContent>
-      </Card>
+      </AdminCard>
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
+      <AdminCard>
             <Stack spacing={2}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                Generate content
+              </Typography>
               <FormControl fullWidth disabled={keysLoading || keys.length === 0}>
                 <InputLabel id="pin-creator-key-label">API key</InputLabel>
                 <AppSelect
@@ -505,15 +497,18 @@ export function PinCreatorPage() {
                 {ideasMutation.isPending ? 'Generating ideas…' : 'Generate title ideas'}
               </Button>
             </Stack>
-        </CardContent>
-      </Card>
+      </AdminCard>
 
       {errorMessage && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error">
           {errorMessage}
         </Alert>
       )}
+          </Stack>
+        </Grid>
 
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <Stack spacing={3}>
       {ideasMutation.isPending && (
         <Stack spacing={1} sx={{ mb: 3 }}>
           {Array.from({ length: 4 }).map((_, i) => (
@@ -523,7 +518,7 @@ export function PinCreatorPage() {
       )}
 
       {ideas.length > 0 && !ideasMutation.isPending && (
-        <Box sx={{ mb: 3 }}>
+        <AdminCard>
           <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
             Title ideas — click one to generate full pin
           </Typography>
@@ -551,12 +546,11 @@ export function PinCreatorPage() {
               </Card>
             ))}
           </Stack>
-        </Box>
+        </AdminCard>
       )}
 
       {pinMutation.isPending && (
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
+        <AdminCard>
             <Stack
               direction="row"
               spacing={2}
@@ -568,21 +562,20 @@ export function PinCreatorPage() {
                 {selectedTitle}&rdquo;… This may take up to two minutes.
               </Typography>
             </Stack>
-          </CardContent>
-        </Card>
+        </AdminCard>
       )}
 
       {generatedPin && !pinMutation.isPending && (
-        <Card>
+        <Box>
           {publishMutation.isPending && (
             <>
-              <LinearProgress />
-              <Alert severity="info" sx={{ borderRadius: 0 }}>
+              <LinearProgress sx={{ borderRadius: '12px 12px 0 0' }} />
+              <Alert severity="info" sx={{ borderRadius: 0, mb: 0 }}>
                 Removing metadata and preparing image for upload…
               </Alert>
             </>
           )}
-          <CardContent>
+        <AdminCard>
             <Stack
               direction="row"
               sx={{
@@ -711,9 +704,12 @@ export function PinCreatorPage() {
                 </Link>
               </Alert>
             )}
-          </CardContent>
-        </Card>
+        </AdminCard>
+        </Box>
       )}
+          </Stack>
+        </Grid>
+      </Grid>
     </Box>
   );
 }
