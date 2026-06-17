@@ -125,12 +125,15 @@ export function AdvancedSettingsPanel({ disabled = false }: AdvancedSettingsPane
                 })
               }
             >
-              {[4, 5, 6, 8, 10, 15].map((duration) => (
+              {[4, 5, 6, 8].map((duration) => (
                 <MenuItem key={duration} value={String(duration)}>
-                  {duration} seconds
+                  {duration} seconds per segment
                 </MenuItem>
               ))}
             </AppSelect>
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+              Veo generates 8-second segments. Longer source videos are extended automatically to cover the full clip.
+            </Typography>
           </FormControl>
 
           <FormControl fullWidth disabled={disabled} sx={{ gridColumn: { md: '1 / -1' } }}>

@@ -8,7 +8,10 @@ import type {
   GenerateVideoPayload,
   RecoverPartialPayload,
   RecoverPartialResult,
+  SceneBatchStatusResponse,
   SessionStatusResult,
+  StartSceneBatchPayload,
+  StartSceneBatchResponse,
   StoredVideoItem,
   VideoModelsResponse,
 } from '../types/videoGeneration';
@@ -131,4 +134,31 @@ export async function deleteStoredVideo(id: string): Promise<void> {
   await apiClient.delete(
     `/video-generation/stored/${encodeURIComponent(id)}`,
   );
+}
+
+export async function startSceneBatch(
+  payload: StartSceneBatchPayload,
+): Promise<StartSceneBatchResponse> {
+  const { data } = await apiClient.post<StartSceneBatchResponse>(
+    '/video-generation/scene-jobs',
+    payload,
+  );
+  return data;
+}
+
+export async function getSceneBatchStatus(
+  jobId: string,
+): Promise<SceneBatchStatusResponse> {
+  const { data } = await apiClient.get<SceneBatchStatusResponse>(
+    `/video-generation/scene-jobs/${encodeURIComponent(jobId)}/status`,
+  );
+  return data;
+}
+
+export async function downloadSceneBatchResult(jobId: string): Promise<Blob> {
+  const { data } = await apiClient.get<Blob>(
+    `/video-generation/scene-jobs/${encodeURIComponent(jobId)}/result`,
+    { responseType: 'blob' },
+  );
+  return data;
 }

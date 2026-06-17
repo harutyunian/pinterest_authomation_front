@@ -38,17 +38,14 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
+import { useSceneBatchGeneration } from '../hooks/useSceneBatchGeneration';
 import { AppSelect } from '../components/AppSelect';
 import { getGeminiKeys } from '../api/geminiKeys';
 import {
-  combineVideos,
   fetchSessionSceneBlob,
   fetchStoredVideoBlob,
-  finalizeContinuityVideo,
-  generateScene,
   generateVideo,
   getVideoModels,
-  recoverPartialSession,
 } from '../api/videoGeneration';
 import type {
   PartialScenePreview,
@@ -65,11 +62,10 @@ import {
 } from '../utils/continuityMode';
 import { normalizeVideoBlob } from '../utils/videoBlob';
 import {
-  formatCompletedSceneRange,
   formatPartialFailureMessage,
-  parseSceneError,
 } from '../utils/sceneError';
 import {
+  loadActiveSceneJob,
   loadVideoGeneratorDraft,
   saveVideoGeneratorDraft,
 } from '../utils/videoGeneratorStorage';
@@ -111,9 +107,6 @@ function getErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-function createSessionId(): string {
-  return crypto.randomUUID();
-}
 
 const LAST_SCENE_PREVIEW_ID_KEY = 'pinterest-last-scene-video-id';
 
@@ -168,6 +161,12 @@ function validateImageCharacters(characters: VideoCharacter[]): string | null {
 
 export function VideoGeneratorPage() {
   const initialForm = useMemo(() => getInitialFormState(), []);
+  const sceneBatch = useSceneBatchGeneration();
+  const resumeSceneBatchRef = useRef(sceneBatch.resumePolling);
+  resumeSceneBatchRef.current = sceneBatch.resumePolling;
+  const handledCompletedJobRef = useRef<string | null>(null);
+  const handledPartialJobRef = useRef<string | null>(null);
+  const handledFailedJobRef = useRef<string | null>(null);
 
   const [mode, setMode] = useState<VideoGenerationMode>(initialForm.mode);
   const [keyId, setKeyId] = useState(initialForm.keyId);
@@ -195,9 +194,16 @@ export function VideoGeneratorPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [partialRecoveryMessage, setPartialRecoveryMessage] = useState('');
   const [partialScenes, setPartialScenes] = useState<PartialScenePreview[]>([]);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [progressLabel, setProgressLabel] = useState('');
-  const [progressValue, setProgressValue] = useState(0);
+  const [isGeneratingJustVideo, setIsGeneratingJustVideo] = useState(false);
+  const [justVideoProgressLabel, setJustVideoProgressLabel] = useState('');
+  const [justVideoProgressValue, setJustVideoProgressValue] = useState(0);
+  const isGenerating = isGeneratingJustVideo || sceneBatch.isBusy;
+  const progressLabel = sceneBatch.isBusy
+    ? sceneBatch.progressMessage
+    : justVideoProgressLabel;
+  const progressValue = sceneBatch.isBusy
+    ? sceneBatch.progress
+    : justVideoProgressValue;
 
   const { data: keys = [], isLoading: keysLoading } = useQuery({
     queryKey: ['gemini-keys'],
@@ -291,6 +297,17 @@ export function VideoGeneratorPage() {
   }, []);
 
   useEffect(() => {
+    const active = loadActiveSceneJob();
+    if (active) {
+      resumeSceneBatchRef.current(active.jobId, active.sessionId);
+    }
+
+    return () => {
+      sceneBatch.cancelPolling();
+    };
+  }, [sceneBatch.cancelPolling]);
+
+  useEffect(() => {
     if (skipKeyIdResetRef.current) {
       skipKeyIdResetRef.current = false;
       return;
@@ -381,9 +398,9 @@ export function VideoGeneratorPage() {
   const handleGenerateJustVideo = async () => {
     setErrorMessage('');
     clearVideoPreview();
-    setIsGenerating(true);
-    setProgressLabel('Generating video…');
-    setProgressValue(0);
+    setIsGeneratingJustVideo(true);
+    setJustVideoProgressLabel('Generating video…');
+    setJustVideoProgressValue(0);
 
     const apiCharacters = characters.map(toApiCharacter);
 
@@ -402,24 +419,24 @@ export function VideoGeneratorPage() {
         model: result.model,
         downloadFilename: 'generated-video.mp4',
       });
-      setProgressValue(100);
+      setJustVideoProgressValue(100);
     } catch (error) {
       setErrorMessage(
         getErrorMessage(error, 'Video generation failed. Please try again.'),
       );
     } finally {
-      setIsGenerating(false);
-      setProgressLabel('');
+      setIsGeneratingJustVideo(false);
+      setJustVideoProgressLabel('');
     }
   };
 
   const loadPartialScenePreviews = async (
-    sessionId: string,
+    batchSessionId: string,
     indices: number[],
   ): Promise<void> => {
     const loaded: PartialScenePreview[] = [];
     for (const sceneIndex of indices) {
-      const rawBlob = await fetchSessionSceneBlob(sessionId, sceneIndex);
+      const rawBlob = await fetchSessionSceneBlob(batchSessionId, sceneIndex);
       const blob = await normalizeVideoBlob(rawBlob);
       loaded.push({
         sceneIndex,
@@ -430,75 +447,159 @@ export function VideoGeneratorPage() {
     setPartialScenes(loaded);
   };
 
-  const handleSceneFailure = async (
-    sessionId: string,
-    useContinuityMode: boolean,
-    totalScenes: number,
-    error: unknown,
-    failedSceneIndex?: number,
-    extraFailedIndices?: number[],
-  ): Promise<void> => {
-    const parsed = parseSceneError(
-      error,
-      'Scene video generation failed. Please try again.',
-    );
-    const failedIndex = parsed.failedSceneIndex ?? failedSceneIndex;
+  useEffect(() => {
+    if (
+      sceneBatch.status !== 'completed' ||
+      !sceneBatch.storedVideoId ||
+      !sceneBatch.jobId
+    ) {
+      return;
+    }
+    if (handledCompletedJobRef.current === sceneBatch.jobId) {
+      return;
+    }
+    handledCompletedJobRef.current = sceneBatch.jobId;
 
-    try {
-      const recovery = await recoverPartialSession({
-        sessionId,
-        continuityMode: useContinuityMode,
-        failedSceneIndex: failedIndex,
-        totalScenes,
-      });
-
-      if (recovery.partialVideo?.storedVideoId) {
-        const rawBlob = await fetchStoredVideoBlob(
-          recovery.partialVideo.storedVideoId,
-        );
+    let cancelled = false;
+    void (async () => {
+      try {
+        const rawBlob = await fetchStoredVideoBlob(sceneBatch.storedVideoId!);
+        if (cancelled) return;
         const blob = await normalizeVideoBlob(rawBlob);
         applyVideoPreview({
           previewUrl: URL.createObjectURL(blob),
-          mimeType: blob.type || recovery.partialVideo.mimeType,
-          model: recovery.partialVideo.model,
-          downloadFilename: useContinuityMode
-            ? 'partial-continuity-video.mp4'
-            : 'partial-combined-video.mp4',
+          mimeType: blob.type || 'video/mp4',
+          model: sceneBatch.continuityMode ? 'continuity' : 'combined',
+          downloadFilename: sceneBatch.continuityMode
+            ? 'continuity-video.mp4'
+            : 'combined-video.mp4',
         });
-      }
-
-      const indices =
-        recovery.completedSceneIndices.length > 0
-          ? recovery.completedSceneIndices
-          : (parsed.completedSceneIndices ?? []);
-
-      if (indices.length > 0) {
-        await loadPartialScenePreviews(sessionId, indices);
-      }
-
-      setPartialRecoveryMessage(recovery.message);
-      let message = formatPartialFailureMessage(
-        parsed,
-        indices.length,
-      );
-      if (extraFailedIndices && extraFailedIndices.length > 1) {
-        const failedLabels = formatCompletedSceneRange(extraFailedIndices);
-        message = `${message} Failed scenes: ${failedLabels}.`;
-      }
-      setErrorMessage(message);
-    } catch {
-      const indices = parsed.completedSceneIndices ?? [];
-      if (indices.length > 0) {
-        await loadPartialScenePreviews(sessionId, indices);
-        setErrorMessage(
-          formatPartialFailureMessage(parsed, indices.length),
+        sessionStorage.setItem(
+          LAST_SCENE_PREVIEW_ID_KEY,
+          sceneBatch.storedVideoId!,
         );
-      } else {
-        setErrorMessage(parsed.message);
+        setPartialRecoveryMessage('');
+        clearPartialScenes();
+        setErrorMessage('');
+      } catch {
+        if (!cancelled) {
+          setErrorMessage('Video generated but preview failed to load.');
+        }
       }
-      setPartialRecoveryMessage('');
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    sceneBatch.status,
+    sceneBatch.storedVideoId,
+    sceneBatch.continuityMode,
+    sceneBatch.jobId,
+  ]);
+
+  useEffect(() => {
+    if (
+      sceneBatch.status !== 'partial' ||
+      !sceneBatch.sessionId ||
+      !sceneBatch.jobId
+    ) {
+      return;
     }
-  };
+    if (handledPartialJobRef.current === sceneBatch.jobId) {
+      return;
+    }
+    handledPartialJobRef.current = sceneBatch.jobId;
+    const batchSessionId = sceneBatch.sessionId;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        if (sceneBatch.storedVideoId) {
+          const rawBlob = await fetchStoredVideoBlob(sceneBatch.storedVideoId);
+          if (!cancelled) {
+            const blob = await normalizeVideoBlob(rawBlob);
+            applyVideoPreview({
+              previewUrl: URL.createObjectURL(blob),
+              mimeType: blob.type || 'video/mp4',
+              model: sceneBatch.continuityMode ? 'continuity' : 'combined',
+              downloadFilename: sceneBatch.continuityMode
+                ? 'partial-continuity-video.mp4'
+                : 'partial-combined-video.mp4',
+            });
+          }
+        }
+
+        if (!cancelled && sceneBatch.completedSceneIndices.length > 0) {
+          await loadPartialScenePreviews(
+            batchSessionId,
+            sceneBatch.completedSceneIndices,
+          );
+        }
+
+        if (!cancelled) {
+          setPartialRecoveryMessage(sceneBatch.partialRecoveryMessage);
+          setErrorMessage(
+            formatPartialFailureMessage(
+              {
+                message:
+                  sceneBatch.error ??
+                  'Scene video generation failed. Please try again.',
+                failedSceneIndex: sceneBatch.failedSceneIndex,
+                sessionId: batchSessionId,
+                completedSceneIndices: sceneBatch.completedSceneIndices,
+              },
+              sceneBatch.completedSceneIndices.length,
+            ),
+          );
+          sceneBatch.acknowledgeTerminalJob();
+        }
+      } catch {
+        if (!cancelled) {
+          setErrorMessage(
+            sceneBatch.error ??
+              'Scene video generation failed. Please try again.',
+          );
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    sceneBatch.status,
+    sceneBatch.sessionId,
+    sceneBatch.storedVideoId,
+    sceneBatch.completedSceneIndices,
+    sceneBatch.failedSceneIndex,
+    sceneBatch.error,
+    sceneBatch.partialRecoveryMessage,
+    sceneBatch.continuityMode,
+    sceneBatch.acknowledgeTerminalJob,
+    sceneBatch.jobId,
+  ]);
+
+  useEffect(() => {
+    if (
+      sceneBatch.status !== 'failed' ||
+      !sceneBatch.error ||
+      !sceneBatch.jobId
+    ) {
+      return;
+    }
+    if (handledFailedJobRef.current === sceneBatch.jobId) {
+      return;
+    }
+    handledFailedJobRef.current = sceneBatch.jobId;
+    setErrorMessage(sceneBatch.error);
+    sceneBatch.acknowledgeTerminalJob();
+  }, [
+    sceneBatch.status,
+    sceneBatch.error,
+    sceneBatch.acknowledgeTerminalJob,
+    sceneBatch.jobId,
+  ]);
 
   const handleGenerateScenes = async () => {
     const validScenes = scenes
@@ -527,156 +628,24 @@ export function VideoGeneratorPage() {
     setPartialRecoveryMessage('');
     clearPartialScenes();
     clearVideoPreview();
-    setIsGenerating(true);
-    setProgressValue(0);
 
-    const sessionId = createSessionId();
     const apiCharacters = characters.map(toApiCharacter);
     const sceneDuration = continuityMode ? (8 as const) : durationSeconds;
 
-    const totalScenes = validScenes.length;
-
     try {
-      if (continuityMode) {
-        for (let sceneIndex = 0; sceneIndex < totalScenes; sceneIndex += 1) {
-          const label =
-            sceneIndex === 0
-              ? `Scene ${sceneIndex + 1} of ${totalScenes} — generating with reference photo…`
-              : `Scene ${sceneIndex + 1} of ${totalScenes} — extending previous clip…`;
-          setProgressLabel(label);
-          setProgressValue(Math.round((sceneIndex / totalScenes) * 90));
-
-          try {
-            await generateScene({
-              keyId,
-              model,
-              sessionId,
-              sceneIndex,
-              prompt: validScenes[sceneIndex]!,
-              characters: apiCharacters,
-              aspectRatio,
-              durationSeconds: sceneDuration,
-              continuityMode: true,
-            });
-          } catch (error) {
-            await handleSceneFailure(
-              sessionId,
-              true,
-              totalScenes,
-              error,
-              sceneIndex,
-            );
-            return;
-          }
-        }
-
-        setProgressLabel('Archiving continuity video…');
-        setProgressValue(95);
-        const finalized = await finalizeContinuityVideo(sessionId);
-        sessionStorage.setItem(
-          LAST_SCENE_PREVIEW_ID_KEY,
-          finalized.storedVideoId,
-        );
-        setProgressLabel('Loading video preview…');
-        setProgressValue(98);
-
-        const rawBlob = await fetchStoredVideoBlob(finalized.storedVideoId);
-        const blob = await normalizeVideoBlob(rawBlob);
-        applyVideoPreview({
-          previewUrl: URL.createObjectURL(blob),
-          mimeType: blob.type || finalized.mimeType,
-          model: finalized.model,
-          downloadFilename: 'continuity-video.mp4',
-        });
-      } else {
-        let completedCount = 0;
-        setProgressLabel(`Generating ${totalScenes} scenes in parallel…`);
-
-        const sceneTasks = validScenes.map((scenePrompt, sceneIndex) =>
-          generateScene({
-            keyId,
-            model,
-            sessionId,
-            sceneIndex,
-            prompt: scenePrompt,
-            characters: apiCharacters,
-            aspectRatio,
-            durationSeconds: sceneDuration,
-            continuityMode: false,
-          }).then(() => {
-            completedCount += 1;
-            setProgressLabel(
-              `Generated ${completedCount} of ${totalScenes} scenes…`,
-            );
-            setProgressValue(Math.round((completedCount / totalScenes) * 90));
-          }),
-        );
-
-        const results = await Promise.allSettled(sceneTasks);
-        const failedIndices = results
-          .map((result, index) => (result.status === 'rejected' ? index : -1))
-          .filter((index) => index >= 0);
-
-        if (failedIndices.length > 0) {
-          const firstRejected = results[failedIndices[0]!];
-          const firstError =
-            firstRejected?.status === 'rejected'
-              ? firstRejected.reason
-              : undefined;
-
-          if (failedIndices.length === totalScenes) {
-            const parsed = parseSceneError(
-              firstError,
-              'Scene video generation failed. Please try again.',
-            );
-            setErrorMessage(parsed.message);
-          } else {
-            await handleSceneFailure(
-              sessionId,
-              false,
-              totalScenes,
-              firstError,
-              failedIndices[0],
-              failedIndices,
-            );
-          }
-          return;
-        }
-
-        setProgressLabel('Combining scenes into final video…');
-        setProgressValue(95);
-
-        const combined = await combineVideos({
-          sessionId,
-          expectedSceneCount: totalScenes,
-        });
-        sessionStorage.setItem(LAST_SCENE_PREVIEW_ID_KEY, combined.storedVideoId);
-        setProgressLabel('Loading video preview…');
-        setProgressValue(98);
-
-        const rawBlob = await fetchStoredVideoBlob(combined.storedVideoId);
-        const blob = await normalizeVideoBlob(rawBlob);
-        applyVideoPreview({
-          previewUrl: URL.createObjectURL(blob),
-          mimeType: blob.type || combined.mimeType,
-          model: combined.model,
-          downloadFilename: 'combined-video.mp4',
-        });
-      }
-
-      setPartialRecoveryMessage('');
-      clearPartialScenes();
-      setProgressValue(100);
-    } catch (error) {
-      await handleSceneFailure(
-        sessionId,
+      await sceneBatch.startBatch({
+        keyId,
+        model,
+        scenes: validScenes,
+        characters: apiCharacters,
+        aspectRatio,
+        durationSeconds: sceneDuration,
         continuityMode,
-        totalScenes,
-        error,
+      });
+    } catch (error) {
+      setErrorMessage(
+        getErrorMessage(error, 'Failed to start scene generation.'),
       );
-    } finally {
-      setIsGenerating(false);
-      setProgressLabel('');
     }
   };
 
@@ -1245,6 +1214,12 @@ export function VideoGeneratorPage() {
           </Stack>
         </CardContent>
       </Card>
+
+      {sceneBatch.isBusy && mode === 'scene' && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Generation in progress — you can close this tab and come back.
+        </Alert>
+      )}
 
       {errorMessage && (
         <Alert severity="error" sx={{ mb: 3 }}>

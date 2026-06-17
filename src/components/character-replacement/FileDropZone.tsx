@@ -93,38 +93,108 @@ export function FileDropZone({
 
 interface PreviewShellProps {
   onRemove: () => void;
+  onReplace?: (file: File) => void;
+  replaceAccept?: string;
+  isReplacing?: boolean;
   disabled?: boolean;
   children: ReactNode;
 }
 
-export function PreviewShell({ onRemove, disabled, children }: PreviewShellProps) {
+export function PreviewShell({
+  onRemove,
+  onReplace,
+  replaceAccept,
+  isReplacing = false,
+  disabled,
+  children,
+}: PreviewShellProps) {
+  const { isDragging, dragHandlers } = useFileDrop({
+    disabled: disabled || isReplacing || !onReplace,
+    onFiles: (files) => {
+      const file = files[0];
+      if (file && onReplace) {
+        onReplace(file);
+      }
+    },
+  });
+
   return (
     <Box
+      {...(onReplace ? dragHandlers : {})}
       sx={{
         position: 'relative',
-        border: 1,
-        borderColor: 'divider',
+        border: '2px solid',
+        borderColor: isDragging ? 'primary.main' : 'divider',
         borderRadius: 2,
         overflow: 'hidden',
+        opacity: isReplacing ? 0.7 : 1,
+        transition: 'border-color 0.2s, opacity 0.2s',
       }}
     >
       {!disabled && (
-        <IconButton
-          aria-label="Remove file"
-          color="error"
-          size="small"
-          onClick={onRemove}
+        <Stack
+          direction="row"
+          spacing={0.5}
           sx={{
             position: 'absolute',
             top: 8,
             right: 8,
             zIndex: 1,
-            bgcolor: 'background.paper',
-            '&:hover': { bgcolor: 'background.paper' },
           }}
         >
-          <DeleteIcon fontSize="small" />
-        </IconButton>
+          {onReplace && (
+            <Button
+              component="label"
+              variant="contained"
+              size="small"
+              disabled={isReplacing}
+              sx={{ minWidth: 0 }}
+            >
+              {isReplacing ? 'Uploading…' : 'Replace'}
+              <input
+                type="file"
+                hidden
+                accept={replaceAccept}
+                disabled={isReplacing}
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) {
+                    onReplace(file);
+                  }
+                  event.target.value = '';
+                }}
+              />
+            </Button>
+          )}
+          <IconButton
+            aria-label="Remove file"
+            color="error"
+            size="small"
+            onClick={onRemove}
+            disabled={isReplacing}
+            sx={{
+              bgcolor: 'background.paper',
+              '&:hover': { bgcolor: 'background.paper' },
+            }}
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Stack>
+      )}
+      {isReplacing && (
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: 'rgba(0,0,0,0.35)',
+            zIndex: 2,
+          }}
+        >
+          <CircularProgress size={32} sx={{ color: 'common.white' }} />
+        </Box>
       )}
       {children}
     </Box>
