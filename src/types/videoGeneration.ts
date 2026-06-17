@@ -120,3 +120,45 @@ export interface PartialScenePreview {
   sceneIndex: number;
   previewUrl: string;
 }
+
+export type SceneBatchJobStatus =
+  | 'queued'
+  | 'generating'
+  | 'processing'
+  | 'completed'
+  | 'failed'
+  | 'partial';
+
+export interface StartSceneBatchPayload {
+  keyId: string;
+  model: string;
+  scenes: string[];
+  characters: VideoCharacter[];
+  aspectRatio?: '16:9' | '9:16';
+  durationSeconds?: 4 | 5 | 6 | 8;
+  continuityMode: boolean;
+}
+
+export interface StartSceneBatchResponse {
+  jobId: string;
+  sessionId: string;
+}
+
+export interface SceneBatchStatusResponse {
+  jobId: string;
+  sessionId: string;
+  status: SceneBatchJobStatus;
+  progress: number;
+  message?: string;
+  continuityMode: boolean;
+  totalScenes: number;
+  currentSceneIndex?: number;
+  completedSceneIndices: number[];
+  failedSceneIndex?: number;
+  storedVideoId?: string;
+  resultVideoUrl?: string;
+  error?: string;
+}
+
+export const SCENE_BATCH_POLL_INTERVAL_MS = 5000;
+export const SCENE_BATCH_GENERATION_TIMEOUT_MS = 20 * 60 * 1000;

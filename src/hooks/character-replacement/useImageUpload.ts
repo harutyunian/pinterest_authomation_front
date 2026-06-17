@@ -17,7 +17,9 @@ export function useImageUpload() {
     (s) => s.setReferenceImageAssetId,
   );
   const setError = useCharacterReplacementStore((s) => s.setError);
-  const setStatus = useCharacterReplacementStore((s) => s.setStatus);
+  const setImageUploading = useCharacterReplacementStore(
+    (s) => s.setImageUploading,
+  );
 
   const clearImage = useCallback(() => {
     revokePreviewUrl(referenceImage?.previewUrl);
@@ -34,31 +36,50 @@ export function useImageUpload() {
       }
 
       setError(null);
-      setStatus('uploading');
+      setImageUploading(true);
+      setReferenceImageAssetId(null);
 
+      const previousImage = referenceImage;
+      if (previousImage?.previewUrl) {
+        revokePreviewUrl(previousImage.previewUrl);
+      }
+
+      let newPreviewUrl: string | undefined;
       try {
-        const previewUrl = createPreviewUrl(file);
+        newPreviewUrl = createPreviewUrl(file);
         const asset: UploadedImageAsset = {
           file,
-          previewUrl,
+          previewUrl: newPreviewUrl,
           sizeBytes: file.size,
           mimeType: file.type || 'image/jpeg',
         };
 
-        const response = await uploadImage(file);
         setReferenceImage(asset);
+
+        const response = await uploadImage(file);
         setReferenceImageAssetId(response.assetId);
-        setStatus('idle');
         return asset;
       } catch (error) {
+        if (newPreviewUrl) {
+          revokePreviewUrl(newPreviewUrl);
+        }
+        setReferenceImage(previousImage ?? null);
+        setReferenceImageAssetId(null);
         setError(
           error instanceof Error ? error.message : 'Image upload failed.',
         );
-        setStatus('idle');
         return null;
+      } finally {
+        setImageUploading(false);
       }
     },
-    [setError, setReferenceImage, setReferenceImageAssetId, setStatus],
+    [
+      referenceImage,
+      setError,
+      setImageUploading,
+      setReferenceImage,
+      setReferenceImageAssetId,
+    ],
   );
 
   return {

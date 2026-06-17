@@ -16,6 +16,8 @@ export interface VideoGeneratorDraft {
   characters: VideoCharacter[];
   scenes: string[];
   continuityMode?: boolean;
+  activeSceneJobId?: string;
+  activeSceneSessionId?: string;
 }
 
 function restoreCharacterPreview(character: VideoCharacter): VideoCharacter {
@@ -81,6 +83,14 @@ export function loadVideoGeneratorDraft(): VideoGeneratorDraft | null {
         ? parsed.scenes.filter((s): s is string => typeof s === 'string')
         : [],
       continuityMode: parsed.continuityMode === true,
+      activeSceneJobId:
+        typeof parsed.activeSceneJobId === 'string'
+          ? parsed.activeSceneJobId
+          : undefined,
+      activeSceneSessionId:
+        typeof parsed.activeSceneSessionId === 'string'
+          ? parsed.activeSceneSessionId
+          : undefined,
     };
   } catch {
     return null;
@@ -89,8 +99,12 @@ export function loadVideoGeneratorDraft(): VideoGeneratorDraft | null {
 
 export function saveVideoGeneratorDraft(draft: VideoGeneratorDraft): void {
   try {
+    const existing = loadVideoGeneratorDraft();
     const payload: VideoGeneratorDraft = {
       ...draft,
+      activeSceneJobId: draft.activeSceneJobId ?? existing?.activeSceneJobId,
+      activeSceneSessionId:
+        draft.activeSceneSessionId ?? existing?.activeSceneSessionId,
       characters: draft.characters.map(
         ({ imagePreviewUrl: _preview, ...character }) => character,
       ),
@@ -103,4 +117,42 @@ export function saveVideoGeneratorDraft(draft: VideoGeneratorDraft): void {
   } catch {
     // ignore quota / serialization errors
   }
+}
+
+export function persistActiveSceneJob(jobId: string, sessionId: string): void {
+  const draft = loadVideoGeneratorDraft();
+  if (!draft) {
+    return;
+  }
+  saveVideoGeneratorDraft({
+    ...draft,
+    activeSceneJobId: jobId,
+    activeSceneSessionId: sessionId,
+  });
+}
+
+export function clearActiveSceneJob(): void {
+  const draft = loadVideoGeneratorDraft();
+  if (!draft?.activeSceneJobId) {
+    return;
+  }
+  saveVideoGeneratorDraft({
+    ...draft,
+    activeSceneJobId: undefined,
+    activeSceneSessionId: undefined,
+  });
+}
+
+export function loadActiveSceneJob(): {
+  jobId: string;
+  sessionId: string;
+} | null {
+  const draft = loadVideoGeneratorDraft();
+  if (draft?.activeSceneJobId && draft.activeSceneSessionId) {
+    return {
+      jobId: draft.activeSceneJobId,
+      sessionId: draft.activeSceneSessionId,
+    };
+  }
+  return null;
 }

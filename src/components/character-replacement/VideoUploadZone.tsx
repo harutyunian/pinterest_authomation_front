@@ -16,8 +16,9 @@ interface VideoUploadZoneProps {
 
 export function VideoUploadZone({ disabled = false }: VideoUploadZoneProps) {
   const { sourceVideo, clearVideo, uploadLocalVideo } = useVideoUpload();
+  const videoUploading = useCharacterReplacementStore((s) => s.videoUploading);
   const status = useCharacterReplacementStore((s) => s.status);
-  const isUploading = status === 'uploading' && !sourceVideo;
+  const isUploading = videoUploading && !sourceVideo;
 
   const handleFile = (file: File) => {
     void uploadLocalVideo(file);
@@ -38,6 +39,9 @@ export function VideoUploadZone({ disabled = false }: VideoUploadZoneProps) {
     return (
       <PreviewShell
         onRemove={clearVideo}
+        onReplace={handleFile}
+        replaceAccept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
+        isReplacing={videoUploading}
         disabled={
           disabled || status === 'generating' || status === 'processing'
         }
@@ -73,7 +77,7 @@ export function VideoUploadZone({ disabled = false }: VideoUploadZoneProps) {
               <Chip size="small" variant="outlined" label={sourceVideo.mimeType} />
             </Stack>
             <Typography variant="body2" color="text.secondary">
-              Source motion video uploaded. Character movement and timing will be preserved.
+              Source motion video. Longer clips are generated in 8-second segments to match the full performance.
             </Typography>
           </Stack>
         </Stack>

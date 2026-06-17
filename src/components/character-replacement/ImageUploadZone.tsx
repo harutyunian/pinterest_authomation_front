@@ -13,8 +13,9 @@ interface ImageUploadZoneProps {
 
 export function ImageUploadZone({ disabled = false }: ImageUploadZoneProps) {
   const { referenceImage, clearImage, uploadLocalImage } = useImageUpload();
+  const imageUploading = useCharacterReplacementStore((s) => s.imageUploading);
   const status = useCharacterReplacementStore((s) => s.status);
-  const isUploading = status === 'uploading' && !referenceImage;
+  const isUploading = imageUploading && !referenceImage;
 
   const handleFile = (file: File) => {
     void uploadLocalImage(file);
@@ -35,6 +36,9 @@ export function ImageUploadZone({ disabled = false }: ImageUploadZoneProps) {
     return (
       <PreviewShell
         onRemove={clearImage}
+        onReplace={handleFile}
+        replaceAccept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+        isReplacing={imageUploading}
         disabled={
           disabled || status === 'generating' || status === 'processing'
         }
@@ -67,7 +71,7 @@ export function ImageUploadZone({ disabled = false }: ImageUploadZoneProps) {
               />
             </Stack>
             <Typography variant="body2" color="text.secondary">
-              Reference character image. Veo will replace the performer while keeping motion.
+              Reference character image. Use Replace or drag a new image to swap characters before generating.
             </Typography>
           </Stack>
         </Stack>

@@ -8,7 +8,7 @@ export type GenerationStatus =
 
 export type OutputResolution = '720p' | '1080p' | '4K';
 
-export type OutputDuration = 4 | 5 | 6 | 8 | 10 | 15;
+export type OutputDuration = 4 | 5 | 6 | 8;
 
 export interface UploadedVideoAsset {
   file: File;
@@ -53,6 +53,7 @@ export interface StartGenerationPayload {
   model: string;
   sourceVideoAssetId: string;
   referenceImageAssetId: string;
+  sourceVideoDurationSeconds?: number;
   prompt: string;
   settings: AdvancedSettings;
 }

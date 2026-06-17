@@ -36,6 +36,7 @@ export function useCharacterReplacementGeneration() {
   const keyId = useCharacterReplacementStore((s) => s.keyId);
   const model = useCharacterReplacementStore((s) => s.model);
   const settings = useCharacterReplacementStore((s) => s.settings);
+  const sourceVideo = useCharacterReplacementStore((s) => s.sourceVideo);
   const sourceVideoAssetId = useCharacterReplacementStore(
     (s) => s.sourceVideoAssetId,
   );
@@ -49,6 +50,8 @@ export function useCharacterReplacementGeneration() {
     (s) => s.estimatedSecondsRemaining,
   );
   const error = useCharacterReplacementStore((s) => s.error);
+  const imageUploading = useCharacterReplacementStore((s) => s.imageUploading);
+  const videoUploading = useCharacterReplacementStore((s) => s.videoUploading);
 
   const setStatus = useCharacterReplacementStore((s) => s.setStatus);
   const setJobId = useCharacterReplacementStore((s) => s.setJobId);
@@ -193,6 +196,10 @@ export function useCharacterReplacementGeneration() {
       setError('Upload both a source video and a reference image.');
       return;
     }
+    if (imageUploading || videoUploading) {
+      setError('Wait for uploads to finish before generating.');
+      return;
+    }
     if (!prompt.trim()) {
       setError('Enter a prompt before generating.');
       return;
@@ -209,6 +216,7 @@ export function useCharacterReplacementGeneration() {
         model,
         sourceVideoAssetId,
         referenceImageAssetId,
+        sourceVideoDurationSeconds: sourceVideo?.durationSeconds,
         prompt: prompt.trim(),
         settings,
       });
@@ -226,11 +234,14 @@ export function useCharacterReplacementGeneration() {
       );
     }
   }, [
+    imageUploading,
     keyId,
     model,
     pollJobStatus,
     prompt,
     referenceImageAssetId,
+    sourceVideo?.durationSeconds,
+    videoUploading,
     resetGeneration,
     setError,
     setEstimatedSecondsRemaining,
@@ -257,7 +268,8 @@ export function useCharacterReplacementGeneration() {
   );
 
   const isBusy =
-    status === 'uploading' ||
+    imageUploading ||
+    videoUploading ||
     status === 'generating' ||
     status === 'processing';
 

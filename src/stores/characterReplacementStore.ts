@@ -13,6 +13,8 @@ import {
 
 interface CharacterReplacementState {
   status: GenerationStatus;
+  imageUploading: boolean;
+  videoUploading: boolean;
   keyId: string;
   model: string;
   prompt: string;
@@ -36,6 +38,8 @@ interface CharacterReplacementState {
   setSourceVideoAssetId: (assetId: string | null) => void;
   setReferenceImageAssetId: (assetId: string | null) => void;
   setStatus: (status: GenerationStatus) => void;
+  setImageUploading: (uploading: boolean) => void;
+  setVideoUploading: (uploading: boolean) => void;
   setJobId: (jobId: string | null) => void;
   setProgress: (progress: number, message?: string) => void;
   setEstimatedSecondsRemaining: (seconds: number | null) => void;
@@ -48,6 +52,8 @@ interface CharacterReplacementState {
 
 const initialGenerationState = {
   status: 'idle' as GenerationStatus,
+  imageUploading: false,
+  videoUploading: false,
   jobId: null,
   progress: 0,
   progressMessage: '',
@@ -79,6 +85,8 @@ export const useCharacterReplacementStore = create<CharacterReplacementState>(
     setReferenceImageAssetId: (assetId) =>
       set({ referenceImageAssetId: assetId }),
     setStatus: (status) => set({ status }),
+    setImageUploading: (imageUploading) => set({ imageUploading }),
+    setVideoUploading: (videoUploading) => set({ videoUploading }),
     setJobId: (jobId) => set({ jobId }),
     setProgress: (progress, message) =>
       set((state) => ({

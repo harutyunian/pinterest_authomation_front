@@ -16,7 +16,10 @@ export function useVideoUpload() {
     (s) => s.setSourceVideoAssetId,
   );
   const setError = useCharacterReplacementStore((s) => s.setError);
-  const setStatus = useCharacterReplacementStore((s) => s.setStatus);
+  const setVideoUploading = useCharacterReplacementStore(
+    (s) => s.setVideoUploading,
+  );
+  const setSettings = useCharacterReplacementStore((s) => s.setSettings);
 
   const clearVideo = useCallback(() => {
     revokePreviewUrl(sourceVideo?.previewUrl);
@@ -33,33 +36,60 @@ export function useVideoUpload() {
       }
 
       setError(null);
-      setStatus('uploading');
+      setVideoUploading(true);
+      setSourceVideoAssetId(null);
 
+      const previousVideo = sourceVideo;
+      if (previousVideo?.previewUrl) {
+        revokePreviewUrl(previousVideo.previewUrl);
+      }
+
+      let newPreviewUrl: string | undefined;
       try {
         const durationSeconds = await getVideoDuration(file);
-        const previewUrl = createPreviewUrl(file);
+        newPreviewUrl = createPreviewUrl(file);
         const asset: UploadedVideoAsset = {
           file,
-          previewUrl,
+          previewUrl: newPreviewUrl,
           durationSeconds,
           sizeBytes: file.size,
           mimeType: file.type || 'video/mp4',
         };
 
-        const response = await uploadVideo(file);
         setSourceVideo(asset);
+        setSettings({
+          outputDuration: Math.min(8, Math.max(4, Math.ceil(durationSeconds))) as
+            | 4
+            | 5
+            | 6
+            | 8,
+        });
+
+        const response = await uploadVideo(file);
         setSourceVideoAssetId(response.assetId);
-        setStatus('idle');
         return asset;
       } catch (error) {
+        if (newPreviewUrl) {
+          revokePreviewUrl(newPreviewUrl);
+        }
+        setSourceVideo(previousVideo ?? null);
+        setSourceVideoAssetId(null);
         setError(
           error instanceof Error ? error.message : 'Video upload failed.',
         );
-        setStatus('idle');
         return null;
+      } finally {
+        setVideoUploading(false);
       }
     },
-    [setError, setSourceVideo, setSourceVideoAssetId, setStatus],
+    [
+      setError,
+      setSettings,
+      setSourceVideo,
+      setSourceVideoAssetId,
+      setVideoUploading,
+      sourceVideo,
+    ],
   );
 
   return {
