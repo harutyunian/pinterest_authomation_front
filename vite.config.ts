@@ -26,6 +26,25 @@ export default defineConfig({
         target: 'http://localhost:3000',
         changeOrigin: true,
       },
+      '/sitemap.xml': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/robots.txt': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        bypass(req) {
+          const pathname = req.url?.split('?')[0] ?? '';
+          if (pathname === '/') {
+            return null;
+          }
+          return '/index.html';
+        },
+      },
       '/tools': {
         target: 'http://localhost:3000',
         changeOrigin: true,
@@ -35,6 +54,10 @@ export default defineConfig({
             return '/index.html';
           }
         },
+      },
+      '/l': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
       },
     },
   },

@@ -21,7 +21,7 @@ apiClient.interceptors.response.use(
       useAuthStore.getState().logout();
       const path = window.location.pathname;
       const isPublicPath =
-        path === '/login' || path.startsWith('/tools') || path === '/' || path === '/privacy';
+        path === '/login' || path.startsWith('/tools') || path.startsWith('/l') || path === '/' || path === '/privacy';
       if (!isPublicPath) {
         window.location.href = '/login';
       }

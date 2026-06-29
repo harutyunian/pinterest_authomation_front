@@ -14,16 +14,13 @@ import { VideoGeneratorPage } from '../pages/VideoGeneratorPage';
 import { CharacterReplacementPage } from '../pages/CharacterReplacementPage';
 import { PinCreatorPage } from '../pages/PinCreatorPage';
 import { TelegramSettingsPage } from '../pages/TelegramSettingsPage';
+import { LinkPageEditorPage } from '../pages/LinkPageEditorPage';
 import { LoginPage } from '../pages/LoginPage';
 import { PrivacyPolicyPage } from '../pages/PrivacyPolicyPage';
 import { PublicImageGeneratorPage } from '../pages/PublicImageGeneratorPage';
-import { WelcomePage } from '../pages/WelcomePage';
-
 export function AppRouter() {
   return (
     <Routes>
-      <Route path="/" element={<WelcomePage />} />
-
       <Route element={<PublicToolsLayout />}>
         <Route path="/tools/image-generator" element={<PublicImageGeneratorPage />} />
       </Route>
@@ -41,6 +38,7 @@ export function AppRouter() {
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/link-page" element={<LinkPageEditorPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/gemini-keys" element={<GeminiKeysPage />} />
           <Route path="/pin-creator" element={<PinCreatorPage />} />
