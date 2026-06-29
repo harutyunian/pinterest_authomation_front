@@ -19,7 +19,10 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       useAuthStore.getState().logout();
-      if (window.location.pathname !== '/login') {
+      const path = window.location.pathname;
+      const isPublicPath =
+        path === '/login' || path.startsWith('/tools') || path === '/' || path === '/privacy';
+      if (!isPublicPath) {
         window.location.href = '/login';
       }
     }

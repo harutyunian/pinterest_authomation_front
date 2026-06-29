@@ -4,6 +4,7 @@ import { LegalPageLayout } from '../components/LegalPageLayout';
 import { MainLayout } from '../components/MainLayout';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { PublicRoute } from '../components/PublicRoute';
+import { PublicToolsLayout } from '../components/PublicToolsLayout';
 import { DashboardPage } from '../pages/DashboardPage';
 import { GeminiKeysPage } from '../pages/GeminiKeysPage';
 import { SettingsPage } from '../pages/SettingsPage';
@@ -15,12 +16,19 @@ import { PinCreatorPage } from '../pages/PinCreatorPage';
 import { TelegramSettingsPage } from '../pages/TelegramSettingsPage';
 import { LoginPage } from '../pages/LoginPage';
 import { PrivacyPolicyPage } from '../pages/PrivacyPolicyPage';
+import { PublicImageGeneratorPage } from '../pages/PublicImageGeneratorPage';
+import { PublicToolsPage } from '../pages/PublicToolsPage';
 import { WelcomePage } from '../pages/WelcomePage';
 
 export function AppRouter() {
   return (
     <Routes>
       <Route path="/" element={<WelcomePage />} />
+
+      <Route element={<PublicToolsLayout />}>
+        <Route path="/tools" element={<PublicToolsPage />} />
+        <Route path="/tools/image-generator" element={<PublicImageGeneratorPage />} />
+      </Route>
 
       <Route element={<LegalPageLayout title="Политика конфиденциальности" />}>
         <Route path="/privacy" element={<PrivacyPolicyPage />} />

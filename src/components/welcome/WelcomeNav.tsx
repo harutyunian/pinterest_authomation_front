@@ -2,6 +2,7 @@ import { LandingButton } from './LandingButton';
 import { MaterialSymbol } from './MaterialSymbol';
 import { NAV_LINKS } from './welcome.constants';
 import { useScrollHeader } from './useScrollHeader';
+import { Link as RouterLink } from 'react-router-dom';
 
 export function WelcomeNav() {
   const scrolled = useScrollHeader();
@@ -20,23 +21,33 @@ export function WelcomeNav() {
           </span>
         </div>
         <nav className="hidden md:flex gap-8">
-          {NAV_LINKS.map(({ label, href, active }) => (
-            <a
-              key={label}
-              href={href}
-              className={`font-button-text text-button-text transition-colors duration-200 ${
-                active
-                  ? 'text-landing-primary font-bold border-b-2 border-landing-primary pb-1'
-                  : 'text-landing-on-surface-variant hover:text-landing-primary'
-              }`}
-            >
-              {label}
-            </a>
-          ))}
+          {NAV_LINKS.map((link) =>
+            'to' in link ? (
+              <RouterLink
+                key={link.label}
+                to={link.to}
+                className="font-button-text text-button-text transition-colors duration-200 text-landing-on-surface-variant hover:text-landing-primary"
+              >
+                {link.label}
+              </RouterLink>
+            ) : (
+              <a
+                key={link.label}
+                href={link.href}
+                className={`font-button-text text-button-text transition-colors duration-200 ${
+                  link.active
+                    ? 'text-landing-primary font-bold border-b-2 border-landing-primary pb-1'
+                    : 'text-landing-on-surface-variant hover:text-landing-primary'
+                }`}
+              >
+                {link.label}
+              </a>
+            ),
+          )}
         </nav>
         <div className="flex items-center gap-4">
-          <LandingButton to="/login" variant="ghost" className="hidden md:inline-flex">
-            Sign in
+          <LandingButton to="/tools" variant="ghost" className="hidden md:inline-flex">
+            Free tools
           </LandingButton>
           <LandingButton to="/login" className="px-6 py-2">
             Get Started
