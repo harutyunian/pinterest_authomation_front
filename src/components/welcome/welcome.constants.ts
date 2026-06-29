@@ -1,10 +1,15 @@
 export type PlatformId = 'pinterest' | 'instagram' | 'facebook' | 'linkedin' | 'x';
 
-export const NAV_LINKS = [
+export type NavLink =
+  | { label: string; to: string; active?: boolean }
+  | { label: string; href: string; active?: boolean };
+
+export const NAV_LINKS: NavLink[] = [
+  { label: 'Tools', to: '/tools' },
   { label: 'Features', href: '#features', active: false },
   { label: 'Solutions', href: '#', active: false },
   { label: 'Pricing', href: '#pricing', active: false },
-] as const;
+];
 
 export const QUEUE_PREVIEW_ITEMS = [
   'Pinterest pin — Tue 9:00',
