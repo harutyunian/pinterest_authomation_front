@@ -17,7 +17,6 @@ import { TelegramSettingsPage } from '../pages/TelegramSettingsPage';
 import { LoginPage } from '../pages/LoginPage';
 import { PrivacyPolicyPage } from '../pages/PrivacyPolicyPage';
 import { PublicImageGeneratorPage } from '../pages/PublicImageGeneratorPage';
-import { PublicToolsPage } from '../pages/PublicToolsPage';
 import { WelcomePage } from '../pages/WelcomePage';
 
 export function AppRouter() {
@@ -26,7 +25,6 @@ export function AppRouter() {
       <Route path="/" element={<WelcomePage />} />
 
       <Route element={<PublicToolsLayout />}>
-        <Route path="/tools" element={<PublicToolsPage />} />
         <Route path="/tools/image-generator" element={<PublicImageGeneratorPage />} />
       </Route>
 

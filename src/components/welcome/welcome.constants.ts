@@ -5,7 +5,7 @@ export type NavLink =
   | { label: string; href: string; active?: boolean };
 
 export const NAV_LINKS: NavLink[] = [
-  { label: 'Tools', to: '/tools' },
+  { label: 'Tools', href: '/tools' },
   { label: 'Features', href: '#features', active: false },
   { label: 'Solutions', href: '#', active: false },
   { label: 'Pricing', href: '#pricing', active: false },
