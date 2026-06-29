@@ -3,6 +3,7 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import HelpIcon from '@mui/icons-material/Help';
 import PinIcon from '@mui/icons-material/PushPin';
+import LinkIcon from '@mui/icons-material/Link';
 import SettingsIcon from '@mui/icons-material/Settings';
 import TelegramIcon from '@mui/icons-material/Telegram';
 
@@ -50,6 +51,13 @@ export const mainNavItems: NavItem[] = [
     label: 'Telegram',
     path: '/telegram',
     icon: <TelegramIcon sx={{ fontSize: 20 }} />,
+    adminOnly: true,
+  },
+  {
+    id: 'link-page',
+    label: 'My Links',
+    path: '/link-page',
+    icon: <LinkIcon sx={{ fontSize: 20 }} />,
     adminOnly: true,
   },
   {
@@ -103,6 +111,10 @@ export const pageTitles: Record<string, { title: string; subtitle?: string; acce
   '/telegram': {
     title: 'Telegram',
     subtitle: 'Channel bot and posting schedule',
+  },
+  '/link-page': {
+    title: 'My Links',
+    subtitle: 'Your Linktree-style public page',
   },
   '/settings': {
     title: 'Settings',
