@@ -46,7 +46,7 @@ export function WelcomeNav() {
           )}
         </nav>
         <div className="flex items-center gap-4">
-          <LandingButton to="/tools" variant="ghost" className="hidden md:inline-flex">
+          <LandingButton href="/tools" variant="ghost" className="hidden md:inline-flex">
             Free tools
           </LandingButton>
           <LandingButton to="/login" className="px-6 py-2">

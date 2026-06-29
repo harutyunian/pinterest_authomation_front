@@ -26,8 +26,8 @@ export function PublicToolsLayout() {
         <Toolbar sx={{ gap: 2 }}>
           <AutoAwesomeIcon sx={{ color: 'primary.main' }} />
           <Typography
-            component={RouterLink}
-            to="/tools"
+            component="a"
+            href="/tools"
             variant="h6"
             sx={{
               fontWeight: 700,
