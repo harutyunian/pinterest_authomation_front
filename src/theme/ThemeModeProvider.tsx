@@ -26,13 +26,8 @@ function readStoredMode(): ThemeMode | null {
   return null;
 }
 
-function getSystemMode(): ThemeMode {
-  if (typeof window === 'undefined') return 'dark';
-  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-}
-
 export function getInitialThemeMode(): ThemeMode {
-  return readStoredMode() ?? getSystemMode();
+  return readStoredMode() ?? 'light';
 }
 
 type ThemeModeContextValue = {

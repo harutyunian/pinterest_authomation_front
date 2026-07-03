@@ -50,8 +50,8 @@ export const PLATFORMS: {
   {
     id: 'x',
     name: 'X',
-    iconBgClass: 'bg-white/10',
-    iconColorClass: 'text-white',
+    iconBgClass: 'bg-gray-100',
+    iconColorClass: 'text-[var(--ytmp3-text)]',
   },
 ];
 
@@ -63,7 +63,7 @@ export const FEATURES = [
     title: 'Smart scheduling',
     description:
       'Plan and automate posts across your social channels. Our algorithm finds the best time to reach your audience.',
-    iconBgClass: 'bg-landing-primary-container/20 text-landing-primary-container',
+    iconBgClass: 'bg-landing-primary/10 text-landing-primary',
     cardClass: '',
   },
   {
@@ -71,7 +71,7 @@ export const FEATURES = [
     title: 'AI-powered content',
     description:
       'Generate images and copy tailored to each platform. Professional posts created in seconds, not hours.',
-    iconBgClass: 'bg-landing-primary-container text-landing-on-primary-container shadow-lg shadow-landing-primary-container/20',
+    iconBgClass: 'bg-landing-primary text-landing-on-primary',
     cardClass: 'border-landing-primary/20',
   },
   {

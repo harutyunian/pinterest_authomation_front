@@ -14,6 +14,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
+import { ConvertButton } from '../components/ytmp3/ConvertButton';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
@@ -109,10 +110,7 @@ export function PublicImageGeneratorPage() {
   return (
     <Box>
       <Stack spacing={1} sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700 }}>
-          AI Image Generator
-        </Typography>
-        <Typography color="text.secondary">
+        <Typography variant="body1" color="text.secondary">
           Free tool — no login required. Paste your{' '}
           <Link href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">
             Gemini API key
@@ -180,9 +178,8 @@ export function PublicImageGeneratorPage() {
               />
 
               <Box>
-                <Button
+                <ConvertButton
                   type="button"
-                  variant="contained"
                   startIcon={
                     generateMutation.isPending ? (
                       <CircularProgress size={20} color="inherit" />
@@ -194,7 +191,7 @@ export function PublicImageGeneratorPage() {
                   disabled={!canGenerate}
                 >
                   {generateMutation.isPending ? 'Generating…' : 'Generate'}
-                </Button>
+                </ConvertButton>
               </Box>
 
               <Alert severity="info" sx={{ mt: 1 }}>

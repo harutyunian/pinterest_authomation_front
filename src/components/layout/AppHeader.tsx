@@ -38,8 +38,8 @@ export function AppHeader() {
         py: 2.5,
         px: { xs: 2, md: 3 },
         borderBottom: `1px solid ${adminColors.border}`,
-        bgcolor: adminColors.bgDefault,
         position: 'sticky',
+        bgcolor: adminColors.bgPaper,
         top: 0,
         zIndex: 1100,
       }}
@@ -70,7 +70,7 @@ export function AppHeader() {
           sx={{
             display: { xs: 'none', md: 'block' },
             width: 220,
-            '& .MuiOutlinedInput-root': { borderRadius: 999 },
+            '& .MuiOutlinedInput-root': { borderRadius: 1 },
           }}
           slotProps={{
             input: {
@@ -99,7 +99,7 @@ export function AppHeader() {
         {user?.role === 'admin' && (
           <Chip label="Admin" size="small" color="primary" sx={{ display: { xs: 'none', sm: 'flex' } }} />
         )}
-        <Avatar sx={{ bgcolor: 'primary.main', width: 36, height: 36, fontSize: 14 }}>
+        <Avatar sx={{ bgcolor: 'primary.main', width: 36, height: 36, fontSize: 14, color: '#fff' }}>
           {user?.username?.[0]?.toUpperCase() ?? '?'}
         </Avatar>
       </Box>

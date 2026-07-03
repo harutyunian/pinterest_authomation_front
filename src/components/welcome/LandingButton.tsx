@@ -22,11 +22,10 @@ export function LandingButton({
     'inline-flex items-center justify-center gap-2 rounded-lg font-button-text text-button-text transition-all active:scale-95';
 
   const variants = {
-    primary:
-      'bg-landing-primary-container text-landing-on-primary-container red-glow hover:brightness-110',
+    primary: 'bg-[var(--ytmp3-cta)] text-[var(--ytmp3-on-primary)] hover:bg-[var(--ytmp3-cta-hover)]',
     outline:
-      'border border-white/20 bg-transparent text-landing-on-surface hover:bg-white/5',
-    ghost: 'text-landing-on-surface-variant hover:text-landing-primary',
+      'border border-[var(--ytmp3-primary)] bg-transparent text-[var(--ytmp3-primary)] hover:bg-[var(--ytmp3-primary)]/5',
+    ghost: 'text-[var(--ytmp3-text-muted)] hover:text-[var(--ytmp3-primary)]',
   };
 
   const classes = `${base} ${variants[variant]} ${className}`.trim();

@@ -8,7 +8,7 @@ export function WelcomeFeatureSection() {
   return (
     <WelcomeSection id="features" className="py-stack-lg">
       <div className="text-center mb-16">
-        <h2 className="font-display-lg text-display-lg-mobile md:text-headline-md">
+        <h2 className="font-display-lg text-display-lg-mobile md:text-headline-md text-[var(--ytmp3-text)]">
           Why Social Automation
         </h2>
       </div>
@@ -16,10 +16,10 @@ export function WelcomeFeatureSection() {
         {FEATURES.map((feature) => (
           <GlassCard
             key={feature.title}
-            className={`p-8 rounded-3xl group hover:bg-white/[0.08] transition-all ${feature.cardClass}`}
+            className={`p-8 rounded-lg group hover:shadow-lg transition-all ${feature.cardClass}`}
           >
             <div
-              className={`w-12 h-12 rounded-xl flex items-center justify-center mb-6 ${feature.iconBgClass}`}
+              className={`w-12 h-12 rounded-lg flex items-center justify-center mb-6 ${feature.iconBgClass}`}
             >
               {feature.icon.type === 'material' ? (
                 <MaterialSymbol name={feature.icon.name} filled />
@@ -27,8 +27,10 @@ export function WelcomeFeatureSection() {
                 <PlatformIcon platform={feature.icon.platformId} />
               )}
             </div>
-            <h3 className="font-headline-sm text-headline-sm mb-4">{feature.title}</h3>
-            <p className="font-body-md text-body-md text-landing-on-surface-variant">
+            <h3 className="font-headline-sm text-headline-sm mb-4 text-[var(--ytmp3-text)]">
+              {feature.title}
+            </h3>
+            <p className="font-body-md text-body-md text-[var(--ytmp3-text-muted)]">
               {feature.description}
             </p>
           </GlassCard>
