@@ -34,13 +34,20 @@ export default defineConfig({
         target: 'http://localhost:3000',
         changeOrigin: true,
       },
+      '/tools/pdf': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
       '/tools': {
         target: 'http://localhost:3000',
         changeOrigin: true,
         bypass(req) {
           const url = req.url ?? '';
-          if (url.startsWith('/tools/image-generator')) {
-            // Skip proxy so Vite serves the React SPA route.
+          if (
+            url.startsWith('/tools/image-generator') ||
+            url.startsWith('/tools/pdf')
+          ) {
+            // Skip proxy so Vite serves the React SPA route or Stirling proxy handles PDF.
             return false;
           }
         },

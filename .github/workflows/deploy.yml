@@ -16,11 +16,45 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           command_timeout: 30m
           script: |
-            set -e
+            set -euo pipefail
             cd /opt/pinterest/frontend
             git fetch origin
             git checkout ${{ github.ref_name }}
             git pull origin ${{ github.ref_name }}
+
             cd /opt/pinterest
+            echo "=== Building and starting web container ==="
             docker compose build web
             docker compose up -d web
+
+            echo "=== Syncing nginx routing for /tools/pdf from backend ==="
+            cd /opt/pinterest/backend
+            git fetch origin
+            git checkout main
+            git pull origin main
+            cp deploy/nginx.conf /opt/pinterest/nginx.conf
+
+            echo "=== Deploying Stirling-PDF at /tools/pdf ==="
+            cp /opt/pinterest/frontend/deploy/docker-compose.stirling.yml /opt/pinterest/docker-compose.stirling.yml
+            cd /opt/pinterest
+            docker compose -f docker-compose.yml -f docker-compose.stirling.yml pull stirling-pdf
+            docker compose -f docker-compose.yml -f docker-compose.stirling.yml up -d stirling-pdf
+
+            echo "=== Waiting for Stirling-PDF health ==="
+            for i in $(seq 1 30); do
+              if docker compose -f docker-compose.yml -f docker-compose.stirling.yml exec -T stirling-pdf \
+                curl -sf http://localhost:8080/tools/pdf/api/v1/info/status; then
+                echo "Stirling-PDF is healthy"
+                break
+              fi
+              if [ "$i" -eq 30 ]; then
+                echo "ERROR: Stirling-PDF health check failed after 30 attempts"
+                exit 1
+              fi
+              sleep 10
+            done
+
+            echo "=== Reloading nginx ==="
+            docker compose exec -T proxy nginx -t
+            docker compose exec -T proxy nginx -s reload
+            echo "=== Frontend + Stirling-PDF deploy finished successfully ==="
