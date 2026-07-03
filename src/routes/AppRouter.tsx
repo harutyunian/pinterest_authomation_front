@@ -18,9 +18,12 @@ import { LinkPageEditorPage } from '../pages/LinkPageEditorPage';
 import { LoginPage } from '../pages/LoginPage';
 import { PrivacyPolicyPage } from '../pages/PrivacyPolicyPage';
 import { PublicImageGeneratorPage } from '../pages/PublicImageGeneratorPage';
+import { WelcomePage } from '../pages/WelcomePage';
 export function AppRouter() {
   return (
     <Routes>
+      <Route path="/" element={<WelcomePage />} />
+
       <Route element={<PublicToolsLayout />}>
         <Route path="/tools/image-generator" element={<PublicImageGeneratorPage />} />
       </Route>

@@ -1,31 +1,26 @@
-import PinterestIcon from '@mui/icons-material/Pinterest';
-import { Box, Typography, alpha } from '@mui/material';
+import { Box } from '@mui/material';
 import { Outlet } from 'react-router-dom';
-import { useAdminColors } from '../theme/ThemeModeProvider';
+import { ytmp3Tokens as t } from '../theme/ytmp3-tokens';
+import { FloatingActionCard } from './ytmp3/FloatingActionCard';
+import { PublicPageShell } from './ytmp3/PublicPageShell';
 
 export function AuthLayout() {
-  const adminColors = useAdminColors();
-
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        bgcolor: adminColors.bgDefault,
-        backgroundImage: `radial-gradient(ellipse at top, ${alpha(adminColors.accent, 0.15)} 0%, transparent 50%)`,
-        px: 2,
-      }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 1 }}>
-        <PinterestIcon sx={{ fontSize: 40, color: 'primary.main' }} />
-        <Typography variant="h5" sx={{ fontWeight: 700 }} color="text.primary">
-          Pinterest Automation
-        </Typography>
-      </Box>
-      <Outlet />
-    </Box>
+    <PublicPageShell
+      title="Sign in to your account"
+      subtitle="Manage Pinterest automation from one dashboard."
+      card={
+        <FloatingActionCard maxWidth={420}>
+          <Outlet />
+        </FloatingActionCard>
+      }
+      footer={
+        <Box sx={{ py: 3, textAlign: 'center' }}>
+          <Box component="span" sx={{ color: t.textMuted, fontSize: '0.75rem' }}>
+            © {new Date().getFullYear()} Social Automation
+          </Box>
+        </Box>
+      }
+    />
   );
 }

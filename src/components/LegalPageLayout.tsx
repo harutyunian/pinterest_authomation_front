@@ -1,6 +1,8 @@
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { Box, Button, Container, Typography } from '@mui/material';
+import { Button } from '@mui/material';
 import { Link as RouterLink, Outlet } from 'react-router-dom';
+import { ContentColumn } from './ytmp3/ContentColumn';
+import { PublicPageShell } from './ytmp3/PublicPageShell';
 
 type LegalPageLayoutProps = {
   title: string;
@@ -8,27 +10,26 @@ type LegalPageLayoutProps = {
 
 export function LegalPageLayout({ title }: LegalPageLayoutProps) {
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        bgcolor: 'background.default',
-        py: { xs: 3, md: 5 },
-      }}
+    <PublicPageShell
+      title={title}
+      subtitle="Legal information"
+      nav={[
+        { label: 'Home', href: '/' },
+        { label: 'Sign in', href: '/login' },
+      ]}
     >
-      <Container maxWidth="md">
+      <ContentColumn>
         <Button
           component={RouterLink}
           to="/"
           startIcon={<ArrowBackIcon />}
+          variant="outlined"
           sx={{ mb: 3 }}
         >
-          На главную
+          Back to home
         </Button>
-        <Typography variant="h4" sx={{ fontWeight: 700, mb: 3 }}>
-          {title}
-        </Typography>
         <Outlet />
-      </Container>
-    </Box>
+      </ContentColumn>
+    </PublicPageShell>
   );
 }

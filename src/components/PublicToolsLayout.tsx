@@ -1,82 +1,54 @@
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import LoginIcon from '@mui/icons-material/Login';
-import {
-  AppBar,
-  Box,
-  Button,
-  Container,
-  Link,
-  Toolbar,
-  Typography,
-} from '@mui/material';
+import { Box, Link, Typography } from '@mui/material';
 import { Link as RouterLink, Outlet } from 'react-router-dom';
+import { ytmp3Tokens as t } from '../theme/ytmp3-tokens';
+import { PublicPageShell } from './ytmp3/PublicPageShell';
 
 export function PublicToolsLayout() {
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', flexDirection: 'column' }}>
-      <AppBar
-        position="sticky"
-        elevation={0}
-        sx={{
-          bgcolor: 'background.paper',
-          borderBottom: 1,
-          borderColor: 'divider',
-        }}
-      >
-        <Toolbar sx={{ gap: 2 }}>
-          <AutoAwesomeIcon sx={{ color: 'primary.main' }} />
-          <Typography
-            component="a"
-            href="/tools"
-            variant="h6"
-            sx={{
-              fontWeight: 700,
-              color: 'text.primary',
-              textDecoration: 'none',
-              flexGrow: 1,
-            }}
-          >
-            Free Tools
-          </Typography>
-          <Button component={RouterLink} to="/" color="inherit" size="small">
-            Home
-          </Button>
-          <Button
-            component={RouterLink}
-            to="/login"
-            variant="contained"
-            size="small"
-            startIcon={<LoginIcon />}
-          >
-            Sign in
-          </Button>
-        </Toolbar>
-      </AppBar>
-
-      <Container component="main" maxWidth="lg" sx={{ flex: 1, py: { xs: 3, md: 4 } }}>
-        <Outlet />
-      </Container>
-
+    <PublicPageShell
+      logo="Free Tools"
+      title="Free online tools"
+      subtitle="AI image generation and more — no account required."
+      nav={[
+        { label: 'All tools', href: '/tools' },
+        { label: 'Home', href: '/' },
+        { label: 'Sign in', href: '/login' },
+      ]}
+    >
       <Box
-        component="footer"
         sx={{
-          py: 2,
-          textAlign: 'center',
-          borderTop: 1,
-          borderColor: 'divider',
+          maxWidth: 1200,
+          mx: 'auto',
+          mt: `${t.cardOverlap}px`,
+          px: `${t.gutter}px`,
+          pb: 4,
+          position: 'relative',
+          zIndex: 1,
         }}
       >
-        <Typography variant="caption" color="text.secondary">
+        <Box
+          sx={{
+            bgcolor: t.surface,
+            borderRadius: `${t.radius}px`,
+            boxShadow: t.shadow,
+            p: { xs: 2, md: 3 },
+          }}
+        >
+          <Outlet />
+        </Box>
+      </Box>
+      <Box sx={{ py: 3, textAlign: 'center', borderTop: `1px solid ${t.borderLight}` }}>
+        <Typography variant="caption" sx={{ color: t.textMuted }}>
           <Link component={RouterLink} to="/privacy" underline="hover" color="inherit">
             Privacy Policy
           </Link>
           {' · '}
           Need automation?{' '}
-          <Link component={RouterLink} to="/login" underline="hover">
+          <Link component={RouterLink} to="/login" underline="hover" sx={{ color: t.primary }}>
             Create an account
           </Link>
         </Typography>
       </Box>
-    </Box>
+    </PublicPageShell>
   );
 }

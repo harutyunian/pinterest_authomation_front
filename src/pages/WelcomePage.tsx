@@ -18,9 +18,9 @@ export function WelcomePage() {
   });
 
   return (
-    <div className="landing-page dark overflow-x-hidden">
+    <div className="landing-page overflow-x-hidden">
       <WelcomeNav />
-      <main className="pt-24">
+      <main>
         <WelcomeHero />
         <WelcomePlatformGrid />
         <WelcomeFeatureSection />

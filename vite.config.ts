@@ -34,24 +34,14 @@ export default defineConfig({
         target: 'http://localhost:3000',
         changeOrigin: true,
       },
-      '/': {
-        target: 'http://localhost:3000',
-        changeOrigin: true,
-        bypass(req) {
-          const pathname = req.url?.split('?')[0] ?? '';
-          if (pathname === '/') {
-            return null;
-          }
-          return '/index.html';
-        },
-      },
       '/tools': {
         target: 'http://localhost:3000',
         changeOrigin: true,
         bypass(req) {
           const url = req.url ?? '';
           if (url.startsWith('/tools/image-generator')) {
-            return '/index.html';
+            // Skip proxy so Vite serves the React SPA route.
+            return false;
           }
         },
       },

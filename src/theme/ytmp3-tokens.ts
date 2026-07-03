@@ -1,0 +1,26 @@
+export const ytmp3Tokens = {
+  primary: '#0059b3',
+  primaryHover: '#004a94',
+  surface: '#ffffff',
+  bodyBg: '#f8f9fa',
+  text: '#333333',
+  textMuted: '#666666',
+  onPrimary: '#ffffff',
+  cta: '#000000',
+  ctaHover: '#1a1a1a',
+  border: '#d1d5db',
+  borderLight: '#e5e7eb',
+  success: '#22C55E',
+  radius: 8,
+  contentMax: 760,
+  containerMax: 1280,
+  gutter: 24,
+  heroMinHeight: '40vh',
+  cardOverlap: -48,
+  shadow: '0 4px 24px rgba(0,0,0,0.08)',
+  shadowSm: '0 1px 3px rgba(0,0,0,0.06)',
+  fontFamily: '"Inter", system-ui, sans-serif',
+  sidebarWidth: 260,
+} as const;
+
+export type Ytmp3Tokens = typeof ytmp3Tokens;

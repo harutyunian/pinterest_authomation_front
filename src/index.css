@@ -10,17 +10,17 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  /* Landing page design tokens (MD3 dark) */
-  --color-landing-primary: #ffb3ad;
-  --color-landing-primary-container: #e60023;
-  --color-landing-on-primary-container: #fff7f6;
-  --color-landing-on-surface: #e0e3e5;
-  --color-landing-on-surface-variant: #e8bcb8;
-  --color-landing-surface: #101415;
-  --color-landing-background: #101415;
-  --color-landing-surface-container: #1d2022;
-  --color-landing-surface-container-low: #191c1e;
-  --color-landing-surface-container-lowest: #0b0f10;
+  /* Landing page tokens (YTMP3 light) */
+  --color-landing-primary: var(--ytmp3-primary);
+  --color-landing-primary-container: var(--ytmp3-primary);
+  --color-landing-on-primary-container: var(--ytmp3-on-primary);
+  --color-landing-on-surface: var(--ytmp3-text);
+  --color-landing-on-surface-variant: var(--ytmp3-text-muted);
+  --color-landing-surface: var(--ytmp3-surface);
+  --color-landing-background: var(--ytmp3-body-bg);
+  --color-landing-surface-container: var(--ytmp3-surface);
+  --color-landing-surface-container-low: var(--ytmp3-body-bg);
+  --color-landing-surface-container-lowest: var(--ytmp3-body-bg);
 
   --spacing-gutter: 24px;
   --spacing-stack-lg: 48px;
@@ -31,13 +31,13 @@
   --spacing-base: 8px;
   --max-width-container-max: 1280px;
 
-  --font-display-lg: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-headline-md: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-headline-sm: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-button-text: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-display-lg: 'Inter', system-ui, sans-serif;
+  --font-headline-md: 'Inter', system-ui, sans-serif;
+  --font-headline-sm: 'Inter', system-ui, sans-serif;
+  --font-button-text: 'Inter', system-ui, sans-serif;
   --font-body-lg: 'Inter', system-ui, sans-serif;
   --font-body-md: 'Inter', system-ui, sans-serif;
-  --font-label-caps: 'JetBrains Mono', ui-monospace, monospace;
+  --font-label-caps: 'Inter', system-ui, sans-serif;
 
   --text-display-lg: 64px;
   --text-display-lg--line-height: 72px;
@@ -88,7 +88,22 @@
 }
 
 :root {
-  --radius: 0.625rem;
+  --ytmp3-primary: #0059b3;
+  --ytmp3-primary-hover: #004a94;
+  --ytmp3-surface: #ffffff;
+  --ytmp3-body-bg: #f8f9fa;
+  --ytmp3-text: #333333;
+  --ytmp3-text-muted: #666666;
+  --ytmp3-on-primary: #ffffff;
+  --ytmp3-cta: #000000;
+  --ytmp3-cta-hover: #1a1a1a;
+  --ytmp3-border: #d1d5db;
+  --ytmp3-border-light: #e5e7eb;
+  --ytmp3-radius: 8px;
+  --ytmp3-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  --ytmp3-content-max: 760px;
+
+  --radius: 0.5rem;
   --background: oklch(0.985 0.002 247);
   --foreground: oklch(0.145 0.015 264);
   --card: oklch(1 0 0);
