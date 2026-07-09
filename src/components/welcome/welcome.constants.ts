@@ -8,7 +8,6 @@ export const NAV_LINKS: NavLink[] = [
   { label: 'Tools', href: '/tools' },
   { label: 'Features', href: '#features', active: false },
   { label: 'Solutions', href: '#', active: false },
-  { label: 'Pricing', href: '#pricing', active: false },
 ];
 
 export const QUEUE_PREVIEW_ITEMS = [
@@ -81,50 +80,6 @@ export const FEATURES = [
       'Pin creation and automation built in from day one. Scale your traffic with visually stunning boards and optimized pins.',
     iconBgClass: 'bg-[#E60023]/20 text-[#E60023]',
     cardClass: '',
-  },
-] as const;
-
-export const PRICING_PLANS = [
-  {
-    name: 'Starter',
-    price: 20,
-    period: 'month',
-    description: 'For individuals getting started with social automation.',
-    features: [
-      '2 connected platforms',
-      '50 scheduled posts / month',
-      'Basic AI content generation',
-      'Email support',
-    ],
-    highlighted: false,
-  },
-  {
-    name: 'Pro',
-    price: 40,
-    period: 'month',
-    description: 'For creators and small teams scaling their presence.',
-    features: [
-      'All 5 platforms',
-      'Unlimited scheduled posts',
-      'Advanced AI content & images',
-      'Analytics dashboard',
-      'Priority support',
-    ],
-    highlighted: true,
-  },
-  {
-    name: 'Enterprise',
-    price: 245,
-    period: 'month',
-    description: 'For agencies and brands with high-volume needs.',
-    features: [
-      'Unlimited team members',
-      'Multi-account management',
-      'Custom AI workflows',
-      'Dedicated account manager',
-      'SLA & API access',
-    ],
-    highlighted: false,
   },
 ] as const;
 

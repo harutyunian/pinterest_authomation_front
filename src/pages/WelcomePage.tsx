@@ -6,7 +6,6 @@ import { WelcomeFooter } from '../components/welcome/WelcomeFooter';
 import { WelcomeHero } from '../components/welcome/WelcomeHero';
 import { WelcomeNav } from '../components/welcome/WelcomeNav';
 import { WelcomePlatformGrid } from '../components/welcome/WelcomePlatformGrid';
-import { WelcomePricingSection } from '../components/welcome/WelcomePricingSection';
 import '../components/welcome/welcome.styles.css';
 
 export function WelcomePage() {
@@ -24,7 +23,6 @@ export function WelcomePage() {
         <WelcomeHero />
         <WelcomePlatformGrid />
         <WelcomeFeatureSection />
-        <WelcomePricingSection />
         <WelcomeCtaBand />
       </main>
       <WelcomeFooter
